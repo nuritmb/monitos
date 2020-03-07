@@ -56,5 +56,5 @@ class Monkey:
     def emmit(self, perception: MonkeySees) -> MonkeySays:
         return self.wordmap[perception]
 
-    def receive(self, perception: MonkeyHears) -> MonkeyDoes:
-        return self.actionmap[perception]
+    def receive(self, heardsignal: MonkeyHears) -> MonkeyDoes:
+        return self.actionmap[heardsignal]
