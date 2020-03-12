@@ -35,7 +35,8 @@ class Predator:
     :param menu: A map from a monkey's state to a monkey's survival chance
     
     """
-    def __init__(self, menu: Dict[MonkeyState, float]) -> None:
+    def __init__(self, menu: Dict[MonkeyState, float], name="") -> None:
+        self.name = name
         self.menu = menu
         self.survivalstate = self.calculatesurvivalstate()
 
@@ -48,8 +49,11 @@ class Predator:
                 bestchance = chance        
         return beststate
 
-    def trytoeat(self, monkeystate: MonkeyState) -> float:
+    def surviveprobability(self, monkeystate: MonkeyState) -> float:
         return self.menu[monkeystate]
+
+    def survived(self, monkeystate: MonkeyState) -> bool:
+        return (random.random() > self.surviveprobability(monkeystate))
 
 class Monkey:
     """Basically a monkey
