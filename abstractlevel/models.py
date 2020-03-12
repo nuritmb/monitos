@@ -90,5 +90,8 @@ class Monkey:
     def emmit(self, perception: Predator) -> MonkeySignal:
         return self.wordmap[perception]
 
+    def interpret(self, heardsignal: MonkeySignal) -> None:
+        return self.actionmap[heardsignal]
+
     def receive(self, heardsignal: MonkeySignal) -> None:
-        self.state = self.actionmap[heardsignal]
+        self.state = self.interpret(heardsignal)
