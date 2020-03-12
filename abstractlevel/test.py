@@ -1,3 +1,3 @@
-from models import Monkey, MonkeySays
+from models import Monkey, MonkeySignal
 
-print(MonkeySays(0))
+print(MonkeySignal(0))
