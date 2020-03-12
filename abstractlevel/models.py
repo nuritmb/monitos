@@ -53,7 +53,7 @@ class Predator:
         return self.menu[monkeystate]
 
     def survived(self, monkeystate: MonkeyState) -> bool:
-        return (random.random() > self.surviveprobability(monkeystate))
+        return (random.random() < self.surviveprobability(monkeystate))
 
 class Monkey:
     """Basically a monkey

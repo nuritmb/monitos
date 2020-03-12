@@ -26,9 +26,9 @@ monkeystates = [
 
 nothing = Predator(
     menu={
-        monkeystates[0]: 0.0,
-        monkeystates[1]: 0.0,
-        monkeystates[2]: 0.0 
+        monkeystates[0]: 1.0,
+        monkeystates[1]: 1.0,
+        monkeystates[2]: 1.0 
     },
     name="nothing"
 )
