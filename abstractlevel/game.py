@@ -32,7 +32,7 @@ nothing = Predator(
         monkeystates[1]: 0.9,
         monkeystates[2]: 0.9 
     },
-    name="nothing"
+    name='nothing'
 )
 
 eagle = Predator(
@@ -41,7 +41,7 @@ eagle = Predator(
         monkeystates[1]: 0.9,
         monkeystates[2]: 0.1
     },
-    name="eagle"
+    name='eagle'
 )
 
 snake = Predator(
@@ -50,7 +50,7 @@ snake = Predator(
         monkeystates[1]: 0.1,
         monkeystates[2]: 0.9
     },
-    name="snake"
+    name='snake'
 )
 
 predators = [
@@ -68,24 +68,10 @@ monkeylist = []
 for i in range(nmonkeys):
     monkeylist.append(
         Monkey(
+            name='Jeff King %d'%(i+1),
             predator_list=predators,
             signal_list=monkeyvocab,
             state_list=monkeystates))
-
-def printmonkey(monkey, index="", indentlevel=0):
-    index = str(index)
-    indent = "    "*indentlevel
-    print("%s--------------"%indent)
-    print("%sJeff King %s" % (indent,index))
-    print("%s--------------"%indent)
-    print("%sMonkey Wordmap:"%indent)
-    for pred, sig in monkey.wordmap.items():
-        print("%s%s"%(indent, pred.name), " -> ", sig.value, " -> ", monkey.interpret(sig).value)
-    print("%s--------------"%indent)
-    print("%sMonkey Actionmap:"%indent)
-    for sig, act in monkey.actionmap.items():
-        print("%s%s"%(indent, sig.value), " -> ", act.value)
-    print("%s--------------"%indent)
 
 
 #############
@@ -93,80 +79,81 @@ def printmonkey(monkey, index="", indentlevel=0):
 #############
 
 for turn in range(nturns):
-    print("TURN %d" % turn)
-    print("--------------")
+    print('TURN %d' % turn)
+    print('--------------')
+    # PREDATOR APPEARS
     p = random.random()
-
     pred = nothing
     if p > 1.0 - eagle_prob:
         pred = eagle
     elif p < snake_prob:
         pred = snake
-    print("predator:", pred.name)
+    print('predator:', pred)
 
-    witness_i = random.choice(range(len(monkeylist)))
-    witness = monkeylist[witness_i]
+    # WITNESS SEES
+    witness = random.choice(monkeylist)
+    # WITNESS EMMITS SIGNAL
     msg = witness.emmit(pred)
-    print("witness:")
-    printmonkey(witness, witness_i, indentlevel=1)
-    print("message:", msg.value)
+    print('witness:')
+    witness.display(indentlevel=1)
+    print('message:', msg)
 
+    # EATING PHASE
     monkeystatecounter = {}
-
-
     newmonkeylist = []
     for monkey in monkeylist:
         # TODO: witness state change
         monkey.receive(msg)
-
         if monkey.state in monkeystatecounter:
             monkeystatecounter[monkey.state] += 1
         else:
             monkeystatecounter[monkey.state] = 0
-
         if pred.survived(monkey.state):
             newmonkeylist.append(monkey)
-
-    print("state count:")
+    print('state count:')
     for state, count in monkeystatecounter.items():
-        print("    %d %s monkeys"%(count, state.value))
-
-    print("%d monkeys killed" % (len(monkeylist)-len(newmonkeylist)))
-    print("%d monkeys left" % len(newmonkeylist))
+        print('    %d %s monkeys'%(count, state.value))
+    print('%d monkeys killed' % (len(monkeylist)-len(newmonkeylist)))
+    print('%d monkeys left' % len(newmonkeylist))
     monkeylist = newmonkeylist
 
+    # REPRODUCTIVE PHASE
     babymonkeys = []
     nbabymonkeys = int(len(newmonkeylist)*(reproduction_rate-1.0))
     for babymoney_i in range(nbabymonkeys):
         teacher = random.choice(monkeylist)
-        baby = Monkey(wordmap=teacher.wordmap, actionmap=teacher.actionmap)
+        baby = Monkey(
+            name='Jeff King %d'%(babymoney_i+1+len(monkeylist)),
+            wordmap=teacher.wordmap,
+            actionmap=teacher.actionmap)
         if random.random() < mutation_probability:
             baby.random_wordmap(predator_list=predators, signal_list=monkeyvocab)
             baby.random_actionmap(signal_list=monkeyvocab, state_list=monkeystates)
         babymonkeys.append(baby)
-    print("reproduction phase: %d monkeys created" % len(babymonkeys))
+    print('reproduction phase: %d monkeys created' % len(babymonkeys))
     monkeylist.extend(babymonkeys)
-    print("new population: %d monkeys" % len(newmonkeylist))
+    print('new population: %d monkeys' % len(newmonkeylist))
 
     if len(monkeylist) > nmonkeys:
         exceed = len(monkeylist) - nmonkeys
-        print("the monkey population has exceeded capacity")
+        print('the monkey population has exceeded capacity')
         random.shuffle(monkeylist)
         monkeylist = monkeylist[:nmonkeys]
-        print("%d monkeys have been eliminated by God."%exceed)
+        print('%d monkeys have been eliminated by God.'%exceed)
 
-    print("--------------")
+    print('--------------')
+    print('')
 
     if len(monkeylist) < 100:
-        print("GAME OVER.")
+        print('GAME OVER.')
         break
 
 input('press ENTER')
 
-print("")
-print("################")
-print("SURVIVORS")
-print("################")
+print('')
+print('################')
+print('SURVIVORS')
+print('################')
 for i, monkey in enumerate(monkeylist[:100]):
-    printmonkey(monkey, i)
-    print("")
+    monkey.display()
+    print('')

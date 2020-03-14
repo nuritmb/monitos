@@ -2,9 +2,9 @@ from typing import List, Dict
 import random
 
 class Item:
-    """An Item
+    '''An Item
 
-    """
+    '''
     def __init__(self, value):
         self.value = value
 
@@ -15,39 +15,53 @@ class Item:
         return hash((self.value, type(self)))
 
 class MonkeySignal(Item):
-    """An item of a monkey's vocabulary
+    '''An item of a monkey's vocabulary
 
-    """
+    '''
     def __init__(self, value):
         super().__init__(value)
+
+    def __repr__(self):
+        return 'Signal({value})'.format(value=self.value)
+
+    def __str__(self):
+        return self.__repr__()
 
 class MonkeyState(Item):
-    """A possible action of monkey upon hearing a message (e.g. hide in a bush)
+    '''A possible action of monkey upon hearing a message (e.g. hide in a bush)
 
-    """
+    '''
     def __init__(self, value):
         super().__init__(value)
 
+    def __repr__(self):
+        return 'State({value})'.format(value=self.value)
+
+    def __str__(self):
+        return self.__repr__()
 
 class Predator:
-    """A predator takes a monkey's state and output's the monkey's survival probability
+    '''A predator takes a monkey's state and output's the monkey's survival probability
 
     :param menu: A map from a monkey's state to a monkey's survival chance
     
-    """
-    def __init__(self, menu: Dict[MonkeyState, float], name="") -> None:
+    '''
+    def __init__(self, menu: Dict[MonkeyState, float], name='') -> None:
         self.name = name
         self.menu = menu
-        self.survivalstate = self.calculatesurvivalstate()
+        self.survivalstates = self.calculatesurvivalstates()
 
-    def calculatesurvivalstate(self) -> MonkeyState:
-        beststate = None
-        bestchance = 0.0
+    def calculatesurvivalstates(self) -> MonkeyState:
+        beststates = []
+        bestchance = -1.0
         for monkeystate, chance in self.menu.items():
             if chance > bestchance:
-                beststate = monkeystate
-                bestchance = chance        
-        return beststate
+                beststates = [monkeystate]
+                bestchance = chance
+            elif chance == bestchance:
+                beststates.append(monkeystate)
+                bestchance = chance 
+        return beststates
 
     def surviveprobability(self, monkeystate: MonkeyState) -> float:
         return self.menu[monkeystate]
@@ -55,8 +69,39 @@ class Predator:
     def survived(self, monkeystate: MonkeyState) -> bool:
         return (random.random() < self.surviveprobability(monkeystate))
 
+    def __eq__(self, other):
+        return (self.name == other.name) and (self.menu == other.menu)
+
+    def __hash__(self):
+        return hash((self.name, frozenset(self.menu.items())))
+
+    def display(self, indentlevel=0):
+        indent = ' '*4*indentlevel
+        print(indent+('-'*30))
+        print(indent+self.name)
+        print(indent+('-'*30))
+        print(indent+'Survival Chances:')
+        for state, prob in self.menu.items():
+            print(indent+'{0}: {1:.2f} %'.format(state, 100.0*prob))
+        print(indent+('-'*30))
+        print(indent+'Best States:')
+        for state in self.survivalstates:
+            print(indent+state.__str__())
+        print(indent+('-'*30))
+
+    def __repr__(self):
+        menurepr = []
+        for state, prob in self.menu.items():
+            menurepr.append('{0}:{1:.4f}'.format(state.__repr__(), prob))
+        menurepr = '{' + (', '.join(menurepr)) + '}'
+        return 'Predator({name}, menu={menu}, ss={ss})'.format(name=self.name, menu=menurepr, ss=self.survivalstates)
+
+    def __str__(self):
+        return 'Predator({})'.format(self.name)
+
+
 class Monkey:
-    """Basically a monkey
+    '''Basically a monkey
 
     A monkey has a *wordmap* and an *actionmap*. A wordmap maps perceptions to (spoken) words
     and an actionmap maps (heard) words to actions. The first one determines what signal a
@@ -69,8 +114,9 @@ class Monkey:
     :param wordmap: map from perceptions to (spoken) words
     :param actionmap: map from (heard) words to actions
 
-    """
-    def __init__(self, predator_list: List[Predator] = None, signal_list: List[MonkeySignal] = None, state_list: List[MonkeyState] = None, wordmap: Dict[Predator, MonkeySignal] = None, actionmap: Dict[MonkeySignal, MonkeyState] = None) -> None:
+    '''
+    def __init__(self, name='Jeff King', predator_list: List[Predator] = None, signal_list: List[MonkeySignal] = None, state_list: List[MonkeyState] = None, wordmap: Dict[Predator, MonkeySignal] = None, actionmap: Dict[MonkeySignal, MonkeyState] = None) -> None:
+        self.name = name
         self.wordmap = (wordmap if wordmap else self.random_wordmap(predator_list, signal_list))
         self.actionmap = (actionmap if actionmap else self.random_actionmap(signal_list, state_list))
         self.state = None
@@ -95,3 +141,36 @@ class Monkey:
 
     def receive(self, heardsignal: MonkeySignal) -> None:
         self.state = self.interpret(heardsignal)
+
+    def display(self, indentlevel=0):
+        indent = ' '*4*indentlevel
+        print(indent+('-'*30))
+        print(indent+self.name)
+        print(indent+('-'*30))
+        print(indent+'Monkey Wordmap:')
+        for pred, sig in self.wordmap.items():
+            print(indent+pred.__str__()+' -> '+sig.__str__()+' -> '+self.interpret(sig).__str__())
+        print(indent+('-'*30))
+        print(indent+'Monkey Actionmap:')
+        for sig, act in self.actionmap.items():
+            print(indent+sig.__str__()+' -> '+act.__str__())
+        print(indent+('-'*30))
+
+    def __repr__(self):
+        wordmaprepr = []
+        for pred, sig in self.wordmap.items():
+            wordmaprepr.append('{0}:{1}'.format(pred.__repr__(), sig.__repr__()))
+        wordmaprepr = '{' + (', '.join(wordmaprepr)) + '}'
+        actionmaprepr = []
+        for sig, act in self.actionmap.items():
+            actionmaprepr.append('{0}:{1}'.format(sig.__repr__(), act.__repr__()))
+        actionmaprepr = '{' + (', '.join(actionmaprepr)) + '}'
+        return 'Monkey(name={name}, wordmap={wordmap}, actionmap={actionmap}, state={state})'.format(
+            name=self.name,
+            wordmap=wordmaprepr,
+            actionmap=actionmaprepr,
+            state=self.state.__repr__()
+        )
+
+    def __str__(self):
+        return 'Monkey({})'.format(self.name)
