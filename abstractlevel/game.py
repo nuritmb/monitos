@@ -119,7 +119,7 @@ for turn in range(nturns):
 
     # REPRODUCTIVE PHASE
     babymonkeys = []
-    nbabymonkeys = int(len(newmonkeylist)*(reproduction_rate-1.0))
+    nbabymonkeys = int(len(newmonkeylist)*(reproduction_rate-1.0)) ### por qué length de newmonkeylist, good practice??? f u
     for babymoney_i in range(nbabymonkeys):
         teacher = random.choice(monkeylist)
         baby = Monkey(
@@ -150,10 +150,46 @@ for turn in range(nturns):
 
 input('press ENTER')
 
-print('')
-print('################')
-print('SURVIVORS')
-print('################')
+wordmapCountDict=dict()
+
+for i in range(len(predators)):
+    for j in range(len(monkeyvocab)):
+        wordmapCountDict[str(predators[i].name)+'->'+str(monkeyvocab[j].value)]=0 
+
+actionmapCountDict=dict()
+
+for i in range(len(monkeyvocab)):
+    for j in range(len(monkeystates)):
+        actionmapCountDict[str(monkeyvocab[i].value)+'->'+str(monkeystates[j].value)]=0 
+
+
+
+# print("")
+# print("################")
+# print("SURVIVORS")
+# print("################")
 for i, monkey in enumerate(monkeylist[:100]):
-    monkey.display()
-    print('')
+        for predator in predators:
+            wordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)]+=1
+        for vocab in monkeyvocab:
+            actionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)]+=1
+#    printmonkey(monkey, i)
+#    print("")
+
+print("################")
+print("Wordmap totals:")
+print("################")
+print(' ')
+
+for key in wordmapCountDict:
+    print("%s : %d" % (key,wordmapCountDict[key]))
+
+print(' ')
+print("################")
+print("Actionmap totals:")
+print("################")
+print(' ')
+
+for key in actionmapCountDict:
+    print("%s : %d" % (key,actionmapCountDict[key]))    
+

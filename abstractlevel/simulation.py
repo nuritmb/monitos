@@ -3,7 +3,7 @@ import random
 import pandas as pd
 import time
 
-from typing import Dict
+from typing import Dict, List
 from enum import Enum
 
 from models import MonkeySignal, MonkeyState, Monkey, Predator # if it doesn't run, add '.' right before models
@@ -12,7 +12,7 @@ from printer import print_sections
 
 class Simulation:
 
-    def __init__(self, nmonkeys, rep_rate, mut_prob, predator_dict, signal_list, state_list, monkey_basename='Jeff King', delete_only_elderly=True):
+    def __init__(self, nmonkeys, rep_rate, mut_prob, predator_dict, signal_list, state_list, monkey_basename='Jeff King', delete_only_elderly=True, archive_cicle=100):
         self.nmonkeys = nmonkeys
         self.rep_rate = rep_rate
         self.mut_prob = mut_prob
@@ -24,6 +24,10 @@ class Simulation:
         self.delete_only_elderly = delete_only_elderly
         self.monkey_list = []
         self.archives = []
+        self.wordmap_count = {}
+        self.actionmap_count = {}
+        self.archive_cicle = archive_cicle
+        self.turn = 0
 
     def normalize_pred_dict(self, predator_dict):
         new_predator_dict = {}
@@ -68,12 +72,32 @@ class Simulation:
                     state_list=self.state_list))
         self.monkey_list.extend(monkey_list)
 
+    def count_wordmaps(self):
+        wordmap_count = {}
+        for monkey in self.monkey_list:
+            for pred, sig in monkey.wordmap.items():
+                if (pred.name, sig) in wordmap_count:
+                    wordmap_count[(pred.name, sig)] += 1
+                else:
+                    wordmap_count[(pred.name, sig)] = 1
+        return wordmap_count
+
+    def count_actionmaps(self):
+        actionmap_count = {}
+        for monkey in self.monkey_list:
+            for sig, act in monkey.wordmap.items():
+                if (sig, act) in actionmap_count:
+                    actionmap_count[(sig, act)] += 1
+                else:
+                    actionmap_count[(sig, act)] = 1
+        return actionmap_count
+
     def replication_phase(self, starting_number=None):
         t0 = time.time()
         starting_number = starting_number if starting_number else (len(self.monkey_list)+1)
         # Normal reproduction
-        number = int(len(self.monkey_list)*(self.rep_rate-1.0)*(1.0-self.mut_prob))
-        teachers  = random.choices(self.monkey_list, k=number)
+        number__no_mutation = int(len(self.monkey_list)*(self.rep_rate-1.0)*(1.0-self.mut_prob))
+        teachers  = random.choices(self.monkey_list, k=number__no_mutation)
         monkey_list__no_mutation = []
         i = starting_number
         for teacher in teachers:
@@ -99,20 +123,19 @@ class Simulation:
         else:
             excess = None
         t2 = time.time()
-        self.archives[-1]['replication_stats'] = {
-            'mutation': number__mutation,
-            'no_mutation': len(monkey_list__no_mutation),
-            'excess': excess,
-            'final_population': len(self.monkey_list)}
-        self.archives[-1]['monkey_list_post_replication'] = copy.deepcopy(self.monkey_list)
-        t3 = time.time()
-        self.archives[-1]['replication_phase_time__normal_reproduction'] = t1 - t0
-        self.archives[-1]['replication_phase_time__mutated_reproduction'] = t2 - t1
-        self.archives[-1]['replication_phase_time__archiving'] = t3 - t2
-
+        if (self.turn % self.archive_cicle) == 0:
+            self.archives[-1]['Replication Stats (No Mutation)'] = len(monkey_list__no_mutation)
+            self.archives[-1]['Replication Stats (Mutation)'] = number__mutation
+            self.archives[-1]['Replication Stats (Excess)'] = excess
+            self.archives[-1]['Replication Stats (Final Population)'] = len(self.monkey_list)
+            t3 = time.time()
+            self.archives[-1]['Replication Phase Time (No Mutation)'] = t1 - t0
+            self.archives[-1]['Replication Phase Time (Mutation)'] = t2 - t1
+            self.archives[-1]['Replication Phase Time (Archiving)'] = t3 - t2
 
     def predator_phase(self):
         t0 = time.time()
+        initial_population = len(self.monkey_list)
         pred = self.get_random_predator()
         witness = self.get_random_monkey()
         message = witness.emmit(pred)
@@ -129,29 +152,49 @@ class Simulation:
                 new_monkey_list.append(monkey)
         t2 = time.time()
         self.monkey_list = new_monkey_list
-        self.archives[-1]['message'] = message
-        self.archives[-1]['predator'] = pred
-        self.archives[-1]['witness'] = copy.deepcopy(witness)
-        self.archives[-1]['monkey_state_counter'] = monkey_state_counter
-        self.archives[-1]['monkey_list_post_predator'] = copy.deepcopy(self.monkey_list)
-        t3 = time.time()
-        self.archives[-1]['predator_phase_time__witnessing'] = t1 - t0
-        self.archives[-1]['predator_phase_time__hunting'] = t2 - t1
-        self.archives[-1]['predator_phase_time__archiving'] = t3 - t2
+        if (self.turn % self.archive_cicle) == 0:
+            self.archives[-1]['Message'] = message
+            self.archives[-1]['Predator'] = pred
+            self.archives[-1]['Average Survival Chance'] = 0
+            self.archives[-1]['Optimal State Counter'] = 0
+            for state, count in monkey_state_counter.items():
+                self.archives[-1]['Monkey State Counter: %s' % state] = count
+                self.archives[-1]['Average Survival Chance'] += count*pred.surviveprobability(state)
+                if state in pred.survivalstates:
+                    self.archives[-1]['Optimal State Counter'] += count
+            self.archives[-1]['Average Survival Chance'] = self.archives[-1]['Average Survival Chance']/initial_population
+            self.archives[-1]['Optimal Survival Chance'] = pred.surviveprobability(pred.survivalstates[0])
+            self.archives[-1]['Monkey Population (Pre Predator)'] = initial_population
+            self.archives[-1]['Monkey Population (Post Predator)'] = len(self.monkey_list)
+            surviving_wordmaps = self.count_wordmaps()
+            surviving_actionmaps = self.count_actionmaps()
+            for (predname, sig), count in surviving_wordmaps.items():
+                self.archives[-1]['Wordmap Predator({0}) -> {1}'.format(predname, sig)] = count
+            for (sig, act), count in surviving_actionmaps.items():
+                self.archives[-1]['Wordmap {0} -> {1}'.format(sig, act)] = count
+            t3 = time.time()
+            self.archives[-1]['Predator Phase Time (Witnessing)'] = t1 - t0
+            self.archives[-1]['Predator Phase Time (Hunting)'] = t2 - t1
+            self.archives[-1]['Predator Phase Time (Archiving)'] = t3 - t2
 
     def run_turn(self):
         t0 = time.time()
-        self.archives.append({})
+        if (self.turn % self.archive_cicle) == 0:
+            self.archives.append({})
         self.predator_phase()
         t1 = time.time()
         self.replication_phase()
         t2 = time.time()
-        self.archives[-1]['predator_phase_time'] = t1 - t0
-        self.archives[-1]['replication_phase_time'] = t2 - t1
+        if (self.turn % self.archive_cicle) == 0:
+            self.archives[-1]['Turn'] = self.turn
+            self.archives[-1]['Predator Phase Time'] = t1 - t0
+            self.archives[-1]['Replication Phase Time'] = t2 - t1
+        self.turn += 1        
 
     def run(self, nturns):
         self.create_monkeys()
-        for _ in range(1, nturns+1):
+        for i in range(1, nturns+1):
+            print('TURN %d' % i)
             if len(self.monkey_list) == 0:
                 print('GAME OVER. All monkeys have been killed.')
                 return
@@ -170,28 +213,28 @@ predators = [
     Predator(
         menu={
             state_list[0]: 1.0,
-            state_list[1]: 0.9,
-            state_list[2]: 0.9
+            state_list[1]: 0.99,
+            state_list[2]: 0.99
         },
         name='nothing'),
     Predator(
         menu={
-            state_list[0]: 0.3,
+            state_list[0]: 0.4,
             state_list[1]: 0.9,
-            state_list[2]: 0.1
+            state_list[2]: 0.3
         },
         name='eagle'),
     Predator(
         menu={
-            state_list[0]: 0.3,
-            state_list[1]: 0.1,
+            state_list[0]: 0.4,
+            state_list[1]: 0.3,
             state_list[2]: 0.9
         },
         name='snake')]
 
 game = Simulation(
-    nmonkeys=100000,
-    rep_rate=1.2,
+    nmonkeys=10000,
+    rep_rate=1.5,
     mut_prob=0.2,
     predator_dict={
         predators[0]:0.6,
@@ -203,36 +246,9 @@ game = Simulation(
 
 print('')
 print('RUNNING GAME')
-game.run(100)
-
-summary = []
-for arch in game.archives:
-    entry = {
-        'predator': arch['predator'],
-        'monkey_population_post_predator': len(arch['monkey_list_post_predator']),
-        'replication_stats__no_mutation': arch['replication_stats']['no_mutation'],
-        'replication_stats__mutation': arch['replication_stats']['mutation'],
-        'replication_stats__excess': arch['replication_stats']['excess'],
-        'monkey_population_post_replication': len(arch['monkey_list_post_replication']),
-        'predator_phase_time': arch['predator_phase_time'],
-        'predator_phase_time__witnessing': arch['predator_phase_time__witnessing'],
-        'predator_phase_time__hunting': arch['predator_phase_time__hunting'],
-        'predator_phase_time__archiving': arch['predator_phase_time__archiving'],
-        'replication_phase_time': arch['replication_phase_time'],
-        'replication_phase_time__normal_reproduction': arch['replication_phase_time__normal_reproduction'],
-        'replication_phase_time__mutated_reproduction': arch['replication_phase_time__mutated_reproduction'],
-        'replication_phase_time__archiving': arch['replication_phase_time__archiving']
-    }
-    entry['monkey_state__optimal_response'] = 0
-    for state, count in arch['monkey_state_counter'].items():
-        entry['monkey_state__'+state.__str__()] = count
-        if state in arch['predator'].survivalstates:
-            entry['monkey_state__optimal_response'] += count
-
-
-    summary.append(entry)
+game.run(10000)
 
 print('ARCHIVES')
-df = pd.DataFrame(summary)
+df = pd.DataFrame(game.archives)
 df.to_csv('archives.csv')
 print(df)
