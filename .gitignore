@@ -3,9 +3,11 @@
 ########################
 
 *.csv
+*.vscode
+*__pycache__*
 
 ########################
-# VSCode Gitignore
+# VS Gitignore
 ########################
 
 ## Ignore Visual Studio temporary files, build results, and
