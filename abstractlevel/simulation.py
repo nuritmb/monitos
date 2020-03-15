@@ -12,21 +12,26 @@ from printer import print_sections
 
 class Simulation:
 
-    def __init__(self, nmonkeys, rep_rate, mut_prob, predator_dict, signal_list, state_list, monkey_basename='Jeff King', delete_only_elderly=True, archive_cicle=100):
+    def __init__(self, nmonkeys, rep_rate, mut_prob, predator_dict, signal_list, state_list, monkey_basename='Jeff King', delete_only_elderly=True, archive_cicle=100, min_monkeys=1, archive_maps=False):
         self.nmonkeys = nmonkeys
         self.rep_rate = rep_rate
         self.mut_prob = mut_prob
         self.predator_dict = self.normalize_pred_dict(predator_dict)
-        self.predator_intervals = self.define_predator_intervals()
+        self.predator_list = list(self.predator_dict)
         self.signal_list = signal_list
         self.state_list = state_list
         self.monkey_basename = monkey_basename
         self.delete_only_elderly = delete_only_elderly
-        self.monkey_list = []
-        self.archives = []
-        self.wordmap_count = {}
-        self.actionmap_count = {}
         self.archive_cicle = archive_cicle
+        self.min_monkeys = min_monkeys
+        self.archive_maps = archive_maps
+        self.predator_intervals = self.define_predator_intervals()
+        self.monkey_list = []
+        self.actionmap_count = {}
+        self.wordmap_count = {}
+        self.archives = []
+        self.wordmap_count = self.initialize_wordmap_count()
+        self.actionmap_count = self.initialize_actionmap_count()
         self.turn = 0
 
     def normalize_pred_dict(self, predator_dict):
@@ -44,6 +49,53 @@ class Simulation:
             left += prob
         return predator_intervals
 
+    def initialize_wordmap_count(self):
+        wordmap_count = {}
+        for pred in self.predator_dict:
+            wordmap_count[pred] = {}
+            for sig in self.signal_list:
+                wordmap_count[pred][sig] = 0
+        return wordmap_count
+
+    def initialize_actionmap_count(self):
+        actionmap_count = {}
+        for sig in self.signal_list:
+            actionmap_count[sig] = {}
+            for act in self.state_list:
+                actionmap_count[sig][act] = 0
+        return actionmap_count
+
+    def reset_game(self):
+        self.monkey_list = []
+        self.wordmap_count = self.initialize_wordmap_count()
+        self.actionmap_count = self.initialize_actionmap_count()
+        self.archives = []
+        self.turn = 0
+
+    def add_monkey_wordmap(self, monkey):
+        for pred, sig in monkey.wordmap.items():
+            self.wordmap_count[pred][sig] += 1
+    
+    def add_monkey_actionmap(self, monkey):
+        for sig, act in monkey.actionmap.items():
+            self.actionmap_count[sig][act] += 1
+
+    def add_monkey_maps(self, monkey):
+        self.add_monkey_wordmap(monkey)
+        self.add_monkey_actionmap(monkey)
+
+    def delete_monkey_wordmap(self, monkey):
+        for pred, sig in monkey.wordmap.items():
+                self.wordmap_count[pred][sig] -= 1
+
+    def delete_monkey_actionmap(self, monkey):
+        for sig, act in monkey.actionmap.items():
+                self.actionmap_count[sig][act] -= 1
+
+    def delete_monkey_maps(self, monkey):
+        self.delete_monkey_wordmap(monkey)
+        self.delete_monkey_actionmap(monkey)
+
     def get_random_predator(self):
         p = random.random()
         for intv, pred in self.predator_intervals.items():
@@ -51,10 +103,6 @@ class Simulation:
             if (intv[0] <= p) and uppercond:
                 return pred
         raise ValueError('probability not within any interval')
-
-    @property
-    def predators(self):
-        return list(self.predator_dict)
 
     def get_random_monkey(self):
         return random.choice(self.monkey_list)
@@ -64,33 +112,14 @@ class Simulation:
         starting_number = starting_number if starting_number else (len(self.monkey_list)+1)
         monkey_list = []
         for i in range(starting_number, starting_number+number):
-            monkey_list.append(
-                Monkey(
-                    name=self.monkey_basename+' '+str(i),
-                    predator_list=self.predators,
-                    signal_list=self.signal_list,
-                    state_list=self.state_list))
+            monkey = Monkey(
+                name=self.monkey_basename+' '+str(i),
+                predator_list=self.predator_list,
+                signal_list=self.signal_list,
+                state_list=self.state_list)
+            monkey_list.append(monkey)
+            self.add_monkey_maps(monkey)
         self.monkey_list.extend(monkey_list)
-
-    def count_wordmaps(self):
-        wordmap_count = {}
-        for monkey in self.monkey_list:
-            for pred, sig in monkey.wordmap.items():
-                if (pred.name, sig) in wordmap_count:
-                    wordmap_count[(pred.name, sig)] += 1
-                else:
-                    wordmap_count[(pred.name, sig)] = 1
-        return wordmap_count
-
-    def count_actionmaps(self):
-        actionmap_count = {}
-        for monkey in self.monkey_list:
-            for sig, act in monkey.wordmap.items():
-                if (sig, act) in actionmap_count:
-                    actionmap_count[(sig, act)] += 1
-                else:
-                    actionmap_count[(sig, act)] = 1
-        return actionmap_count
 
     def replication_phase(self, starting_number=None):
         t0 = time.time()
@@ -101,10 +130,12 @@ class Simulation:
         monkey_list__no_mutation = []
         i = starting_number
         for teacher in teachers:
-            monkey_list__no_mutation.append(Monkey(
+            monkey = Monkey(
                 name=self.monkey_basename+' '+str(i),
                 wordmap=teacher.wordmap,
-                actionmap=teacher.actionmap))
+                actionmap=teacher.actionmap)
+            monkey_list__no_mutation.append(monkey)
+            self.add_monkey_maps(monkey)
             i += 1
         self.monkey_list.extend(monkey_list__no_mutation)
         t1 = time.time()
@@ -116,9 +147,13 @@ class Simulation:
             excess = len(self.monkey_list) - self.nmonkeys
             if self.delete_only_elderly:
                 n_dead = int(len(self.monkey_list) - self.nmonkeys)
-                self.monkey_list = self.monkey_list[n_dead:] # TODO test
+                for monkey in self.monkey_list[:n_dead]:
+                    self.delete_monkey_maps(monkey)
+                self.monkey_list = self.monkey_list[n_dead:]
             else:
                 random.shuffle(self.monkey_list)
+                for monkey in self.monkey_list[self.nmonkeys:]:
+                    self.delete_monkey_maps(monkey)
                 self.monkey_list = self.monkey_list[:self.nmonkeys]
         else:
             excess = None
@@ -150,8 +185,10 @@ class Simulation:
                 monkey_state_counter[monkey.state] = 1
             if pred.survived(monkey.state):
                 new_monkey_list.append(monkey)
-        t2 = time.time()
+            else:
+                self.delete_monkey_maps(monkey)
         self.monkey_list = new_monkey_list
+        t2 = time.time()
         if (self.turn % self.archive_cicle) == 0:
             self.archives[-1]['Message'] = message
             self.archives[-1]['Predator'] = pred
@@ -166,12 +203,13 @@ class Simulation:
             self.archives[-1]['Optimal Survival Chance'] = pred.surviveprobability(pred.survivalstates[0])
             self.archives[-1]['Monkey Population (Pre Predator)'] = initial_population
             self.archives[-1]['Monkey Population (Post Predator)'] = len(self.monkey_list)
-            surviving_wordmaps = self.count_wordmaps()
-            surviving_actionmaps = self.count_actionmaps()
-            for (predname, sig), count in surviving_wordmaps.items():
-                self.archives[-1]['Wordmap Predator({0}) -> {1}'.format(predname, sig)] = count
-            for (sig, act), count in surviving_actionmaps.items():
-                self.archives[-1]['Wordmap {0} -> {1}'.format(sig, act)] = count
+            if self.archive_maps:
+                for pred, sigcount in self.wordmap_count.items():
+                    for sig, count in sigcount.items():
+                        self.archives[-1]['Wordmap {0} -> {1}'.format(pred, sig)] = count
+                for sig, actcount in self.actionmap_count.items():
+                    for act, count in actcount.items():
+                        self.archives[-1]['Actionmap {0} -> {1}'.format(sig, act)] = count
             t3 = time.time()
             self.archives[-1]['Predator Phase Time (Witnessing)'] = t1 - t0
             self.archives[-1]['Predator Phase Time (Hunting)'] = t2 - t1
@@ -192,14 +230,15 @@ class Simulation:
         self.turn += 1        
 
     def run(self, nturns):
+        print('TURNS: ', end='')
         self.create_monkeys()
         for i in range(1, nturns+1):
-            print('TURN %d' % i)
-            if len(self.monkey_list) == 0:
-                print('GAME OVER. All monkeys have been killed.')
+            (print(i, end='') if i==1 else print(', %d' % i, end=''))
+            if len(self.monkey_list) < self.min_monkeys:
+                print('  GAME OVER. There are less than %d monkeys' % self.min_monkeys)
                 return
             self.run_turn()
-        print('GAME OVER. %d monkeys have survived.' % len(self.monkey_list))
+        print('  GAME OVER. %d monkeys have survived.' % len(self.monkey_list))
 
 signal_list=[
     MonkeySignal('we'),
@@ -212,43 +251,53 @@ state_list=[
 predators = [
     Predator(
         menu={
-            state_list[0]: 1.0,
+            state_list[0]: 0.5,
             state_list[1]: 0.99,
-            state_list[2]: 0.99
-        },
-        name='nothing'),
-    Predator(
-        menu={
-            state_list[0]: 0.4,
-            state_list[1]: 0.9,
-            state_list[2]: 0.3
+            state_list[2]: 0.6
         },
         name='eagle'),
     Predator(
         menu={
-            state_list[0]: 0.4,
-            state_list[1]: 0.3,
-            state_list[2]: 0.9
+            state_list[0]: 0.6,
+            state_list[1]: 0.5,
+            state_list[2]: 0.99
         },
         name='snake')]
 
+
 game = Simulation(
     nmonkeys=10000,
-    rep_rate=1.5,
-    mut_prob=0.2,
+    rep_rate=1.2,
+    mut_prob=0.05,
     predator_dict={
-        predators[0]:0.6,
-        predators[1]:0.2,
-        predators[2]:0.2},
+        predators[0]:0.5,
+        predators[1]:0.5},
     signal_list=signal_list,
-    state_list=state_list
-)
+    state_list=state_list,
+    archive_cicle=1,
+    min_monkeys=100,
+    archive_maps=True)
 
 print('')
 print('RUNNING GAME')
-game.run(10000)
+most_turns = 0
+longest_game = None
+for i in range(100):
+    game.reset_game()
+    game.run(1000)
+    if game.turn > most_turns:
+        longest_game = copy.deepcopy(game)
+        most_turns = game.turn
+        print('RECORD HIGH! (%d turns)' % most_turns)
+    if game.turn == 1000:
+        print('MADE IT!')
+        break
 
-print('ARCHIVES')
-df = pd.DataFrame(game.archives)
+df = pd.DataFrame(longest_game.archives)
+df['Optimal State %'] = df['Optimal State Counter']/df['Monkey Population (Pre Predator)']
 df.to_csv('archives.csv')
-print(df)
+
+print('SUMMARY')
+summary_list = ['Predator', 'Monkey Population (Pre Predator)', 'Message'] + [col for col in list(df.columns) if col.find('Monkey State Counter: ') != -1] + ['Average Survival Chance', 'Monkey Population (Post Predator)', 'Optimal State %']
+summary = df[summary_list]
+summary.to_csv('summary.csv')
