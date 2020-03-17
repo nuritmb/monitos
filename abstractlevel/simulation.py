@@ -3,7 +3,7 @@ import random
 import pandas as pd
 import time
 
-from typing import Dict, List
+from typing import Dict, List, Tuple, Union
 from enum import Enum
 
 from models import MonkeySignal, MonkeyState, Monkey, Predator # if it doesn't run, add '.' right before models
@@ -12,7 +12,10 @@ from printer import print_sections
 
 class Simulation:
 
-    def __init__(self, nmonkeys, rep_rate, mut_prob, predator_dict, signal_list, state_list, monkey_basename='Jeff King', delete_only_elderly=True, archive_cicle=100, min_monkeys=1, archive_maps=False):
+    def __init__(
+            self, nmonkeys: int, rep_rate: float, mut_prob: float, predator_dict: Dict[Predator, float],
+            signal_list: List[MonkeySignal], state_list: List[MonkeyState], monkey_basename: str='Jeff King',
+            delete_only_elderly: bool=True, archive_cicle: int=100, min_monkeys: int=1, archive_maps: bool=False) -> None:
         self.nmonkeys = nmonkeys
         self.rep_rate = rep_rate
         self.mut_prob = mut_prob
@@ -34,14 +37,14 @@ class Simulation:
         self.actionmap_count = self.initialize_actionmap_count()
         self.turn = 0
 
-    def normalize_pred_dict(self, predator_dict):
+    def normalize_pred_dict(self, predator_dict: Dict[Predator, float]) -> Dict[Predator, float]:
         new_predator_dict = {}
         prob_sum = sum(predator_dict.values())
         for pred, prob in predator_dict.items():
             new_predator_dict[pred] = prob/prob_sum
         return new_predator_dict
 
-    def define_predator_intervals(self):
+    def define_predator_intervals(self) -> Dict[Tuple[float, float], Predator]:
         predator_intervals = {}
         left = 0.0
         for pred, prob in self.predator_dict.items():
@@ -49,7 +52,7 @@ class Simulation:
             left += prob
         return predator_intervals
 
-    def initialize_wordmap_count(self):
+    def initialize_wordmap_count(self) -> Dict[Predator, Dict[MonkeySignal, int]]:
         wordmap_count = {}
         for pred in self.predator_dict:
             wordmap_count[pred] = {}
@@ -57,7 +60,7 @@ class Simulation:
                 wordmap_count[pred][sig] = 0
         return wordmap_count
 
-    def initialize_actionmap_count(self):
+    def initialize_actionmap_count(self) -> Dict[MonkeySignal, Dict[MonkeyState, int]]:
         actionmap_count = {}
         for sig in self.signal_list:
             actionmap_count[sig] = {}
@@ -65,38 +68,65 @@ class Simulation:
                 actionmap_count[sig][act] = 0
         return actionmap_count
 
-    def reset_game(self):
+    def reset_game(self) -> None:
         self.monkey_list = []
         self.wordmap_count = self.initialize_wordmap_count()
         self.actionmap_count = self.initialize_actionmap_count()
         self.archives = []
         self.turn = 0
 
-    def add_monkey_wordmap(self, monkey):
+    def add_monkey_wordmap(self, monkey: Monkey) -> None:
         for pred, sig in monkey.wordmap.items():
             self.wordmap_count[pred][sig] += 1
     
-    def add_monkey_actionmap(self, monkey):
+    def add_monkey_actionmap(self, monkey: Monkey) -> None:
         for sig, act in monkey.actionmap.items():
             self.actionmap_count[sig][act] += 1
 
-    def add_monkey_maps(self, monkey):
+    def add_monkey_maps(self, monkey: Monkey) -> None:
         self.add_monkey_wordmap(monkey)
         self.add_monkey_actionmap(monkey)
 
-    def delete_monkey_wordmap(self, monkey):
+    def delete_monkey_wordmap(self, monkey: Monkey) -> None:
         for pred, sig in monkey.wordmap.items():
                 self.wordmap_count[pred][sig] -= 1
 
-    def delete_monkey_actionmap(self, monkey):
+    def delete_monkey_actionmap(self, monkey: Monkey) -> None:
         for sig, act in monkey.actionmap.items():
                 self.actionmap_count[sig][act] -= 1
 
-    def delete_monkey_maps(self, monkey):
+    def delete_monkey_maps(self, monkey: Monkey) -> None:
         self.delete_monkey_wordmap(monkey)
         self.delete_monkey_actionmap(monkey)
 
-    def get_random_predator(self):
+    def get_wordmap_convention(self):
+        wordmap_convention = {}
+        for pred, sigcount in self.wordmap_count.items():
+            convention = []
+            maxcount = 0
+            for sig, count in sigcount.items():
+                if count > maxcount:
+                    convention = [sig]
+                elif count == maxcount:
+                    convention.extend(sig)
+            wordmap_convention[pred] = convention
+        return wordmap_convention    
+
+    def get_actionmap_convention(self):
+        actionmap_convention = {}
+        for sig, actcount in self.actionmap_count.items():
+            convention = []
+            maxcount = 0
+            for act, count in actcount.items():
+                if count > maxcount:
+                    convention = [act]
+                elif count == maxcount:
+                    convention.extend(act)
+            actionmap_convention[sig] = convention
+        return actionmap_convention    
+
+
+    def get_random_predator(self) -> Predator:
         p = random.random()
         for intv, pred in self.predator_intervals.items():
             uppercond = ((p < intv[1]) if intv[1] < 1.0 else (p <= intv[1]))
@@ -104,10 +134,10 @@ class Simulation:
                 return pred
         raise ValueError('probability not within any interval')
 
-    def get_random_monkey(self):
+    def get_random_monkey(self) -> Monkey:
         return random.choice(self.monkey_list)
 
-    def create_monkeys(self, number=None, starting_number=None):
+    def create_monkeys(self, number: Union[int,None]=None, starting_number: Union[int,None]=None) -> None:
         number = self.nmonkeys if (number is None) else number
         starting_number = starting_number if starting_number else (len(self.monkey_list)+1)
         monkey_list = []
@@ -121,7 +151,7 @@ class Simulation:
             self.add_monkey_maps(monkey)
         self.monkey_list.extend(monkey_list)
 
-    def replication_phase(self, starting_number=None):
+    def replication_phase(self, starting_number: Union[int,None]=None) -> None:
         t0 = time.time()
         starting_number = starting_number if starting_number else (len(self.monkey_list)+1)
         # Normal reproduction
@@ -168,7 +198,7 @@ class Simulation:
             self.archives[-1]['Replication Phase Time (Mutation)'] = t2 - t1
             self.archives[-1]['Replication Phase Time (Archiving)'] = t3 - t2
 
-    def predator_phase(self):
+    def predator_phase(self) -> None:
         t0 = time.time()
         initial_population = len(self.monkey_list)
         pred = self.get_random_predator()
@@ -215,7 +245,7 @@ class Simulation:
             self.archives[-1]['Predator Phase Time (Hunting)'] = t2 - t1
             self.archives[-1]['Predator Phase Time (Archiving)'] = t3 - t2
 
-    def run_turn(self):
+    def run_turn(self) -> None:
         t0 = time.time()
         if (self.turn % self.archive_cicle) == 0:
             self.archives.append({})
@@ -229,7 +259,7 @@ class Simulation:
             self.archives[-1]['Replication Phase Time'] = t2 - t1
         self.turn += 1        
 
-    def run(self, nturns):
+    def run(self, nturns: int) -> None:
         print('TURNS: ', end='')
         self.create_monkeys()
         for i in range(1, nturns+1):
@@ -266,7 +296,7 @@ predators = [
 
 
 game = Simulation(
-    nmonkeys=10000,
+    nmonkeys=100000,
     rep_rate=1.2,
     mut_prob=0.05,
     predator_dict={
@@ -279,12 +309,13 @@ game = Simulation(
     archive_maps=True)
 
 print('')
-print('RUNNING GAME')
+print('RUNNING GAMES')
+print('-'*30)
 most_turns = 0
 longest_game = None
 for i in range(100):
     game.reset_game()
-    game.run(1000)
+    game.run(1000000)
     if game.turn > most_turns:
         longest_game = copy.deepcopy(game)
         most_turns = game.turn
@@ -292,6 +323,15 @@ for i in range(100):
     if game.turn == 1000:
         print('MADE IT!')
         break
+    print('')
+print('-'*30)
+
+print('WORDMAP CONVENTION:')
+print(longest_game.get_wordmap_convention())
+
+print('ACTIONMAP CONVENTION:')
+print(longest_game.get_actionmap_convention())
+
 
 df = pd.DataFrame(longest_game.archives)
 df['Optimal State %'] = df['Optimal State Counter']/df['Monkey Population (Pre Predator)']

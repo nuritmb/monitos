@@ -1,43 +1,43 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 import random
 
 class Item:
     '''An Item
 
     '''
-    def __init__(self, value):
+    def __init__(self, value: Any) -> None:
         self.value = value
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return ((self.value == other.value) and (type(self) == type(other)))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.value, type(self)))
 
 class MonkeySignal(Item):
     '''An item of a monkey's vocabulary
 
     '''
-    def __init__(self, value):
+    def __init__(self, value: Any) -> None:
         super().__init__(value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Signal({value})'.format(value=self.value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
 class MonkeyState(Item):
     '''A possible action of monkey upon hearing a message (e.g. hide in a bush)
 
     '''
-    def __init__(self, value):
+    def __init__(self, value: Any) -> None:
         super().__init__(value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'State({value})'.format(value=self.value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
 class Predator:
@@ -46,7 +46,7 @@ class Predator:
     :param menu: A map from a monkey's state to a monkey's survival chance
     
     '''
-    def __init__(self, menu: Dict[MonkeyState, float], name='') -> None:
+    def __init__(self, menu: Dict[MonkeyState, float], name: str='') -> None:
         self.name = name
         self.menu = menu
         self.survivalstates = self.calculatesurvivalstates()
@@ -69,13 +69,13 @@ class Predator:
     def survived(self, monkeystate: MonkeyState) -> bool:
         return (random.random() < self.surviveprobability(monkeystate))
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (self.name == other.name) and (self.menu == other.menu)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.name, frozenset(self.menu.items())))
 
-    def display(self, indentlevel=0):
+    def display(self, indentlevel: int=0) -> None:
         indent = ' '*4*indentlevel
         print(indent+('-'*30))
         print(indent+self.name)
@@ -89,14 +89,14 @@ class Predator:
             print(indent+state.__str__())
         print(indent+('-'*30))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         menurepr = []
         for state, prob in self.menu.items():
             menurepr.append('{0}:{1:.4f}'.format(state.__repr__(), prob))
         menurepr = '{' + (', '.join(menurepr)) + '}'
         return 'Predator({name}, menu={menu}, ss={ss})'.format(name=self.name, menu=menurepr, ss=self.survivalstates)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Predator({})'.format(self.name)
 
 
