@@ -2,11 +2,14 @@ from typing import Dict
 from models import MonkeySignal, MonkeyState, Monkey, Predator # if it doesn't run, add '.' right before models
 from enum import Enum
 import random
+import matplotlib.pyplot as plt
+from time import process_time
 
 # GAME CONSTANTS
 
 nmonkeys = 10000
 nturns = 1000
+lastTurn = 0 ###to record LAST TURN to print the EVOLUTION DICTS
 reproduction_rate = 1.7
 mutation_probability = 0.1
 
@@ -74,13 +77,45 @@ for i in range(nmonkeys):
             state_list=monkeystates))
 
 
+# COUNTER CREATION
+
+wordmapCountDict=dict()
+
+for i in range(len(predators)):
+    for j in range(len(monkeyvocab)):
+        wordmapCountDict[str(predators[i].name)+'->'+str(monkeyvocab[j].value)]=0 
+
+actionmapCountDict=dict()
+
+for i in range(len(monkeyvocab)):
+    for j in range(len(monkeystates)):
+        actionmapCountDict[str(monkeyvocab[i].value)+'->'+str(monkeystates[j].value)]=0 
+
+turnwordmapCountDict=dict()
+
+for i in range(len(predators)):
+    for j in range(len(monkeyvocab)):
+        turnwordmapCountDict[str(predators[i].name)+'->'+str(monkeyvocab[j].value)]=[0]*nturns 
+
+turnactionmapCountDict=dict()
+
+for i in range(len(monkeyvocab)):
+    for j in range(len(monkeystates)):
+        turnactionmapCountDict[str(monkeyvocab[i].value)+'->'+str(monkeystates[j].value)]=[0]*nturns 
+
+
+
+
 #############
 # GAME START
 #############
 
+##### to measure how long a game is taking
+t = process_time()
+
 for turn in range(nturns):
-    print('TURN %d' % turn)
-    print('--------------')
+#    print('TURN %d' % turn)
+#    print('--------------')
     # PREDATOR APPEARS
     p = random.random()
     pred = nothing
@@ -88,15 +123,15 @@ for turn in range(nturns):
         pred = eagle
     elif p < snake_prob:
         pred = snake
-    print('predator:', pred)
+    #print('predator:', pred)
 
     # WITNESS SEES
     witness = random.choice(monkeylist)
     # WITNESS EMMITS SIGNAL
     msg = witness.emmit(pred)
-    print('witness:')
-    witness.display(indentlevel=1)
-    print('message:', msg)
+    #print('witness:')
+    #witness.display(indentlevel=1)
+    #print('message:', msg)
 
     # EATING PHASE
     monkeystatecounter = {}
@@ -110,11 +145,11 @@ for turn in range(nturns):
             monkeystatecounter[monkey.state] = 0
         if pred.survived(monkey.state):
             newmonkeylist.append(monkey)
-    print('state count:')
-    for state, count in monkeystatecounter.items():
-        print('    %d %s monkeys'%(count, state.value))
-    print('%d monkeys killed' % (len(monkeylist)-len(newmonkeylist)))
-    print('%d monkeys left' % len(newmonkeylist))
+    #print('state count:')
+#    for state, count in monkeystatecounter.items():
+#        print('    %d %s monkeys'%(count, state.value))
+    #print('%d monkeys killed' % (len(monkeylist)-len(newmonkeylist)))
+    #print('%d monkeys left' % len(newmonkeylist))
     monkeylist = newmonkeylist
 
     # REPRODUCTIVE PHASE
@@ -130,37 +165,42 @@ for turn in range(nturns):
             baby.random_wordmap(predator_list=predators, signal_list=monkeyvocab)
             baby.random_actionmap(signal_list=monkeyvocab, state_list=monkeystates)
         babymonkeys.append(baby)
-    print('reproduction phase: %d monkeys created' % len(babymonkeys))
+    #print('reproduction phase: %d monkeys created' % len(babymonkeys))
     monkeylist.extend(babymonkeys)
-    print('new population: %d monkeys' % len(newmonkeylist))
+    #print('new population: %d monkeys' % len(newmonkeylist))
 
     if len(monkeylist) > nmonkeys:
         exceed = len(monkeylist) - nmonkeys
-        print('the monkey population has exceeded capacity')
+    #    print('the monkey population has exceeded capacity')
         random.shuffle(monkeylist)
         monkeylist = monkeylist[:nmonkeys]
-        print('%d monkeys have been eliminated by God.'%exceed)
+    #    print('%d monkeys have been eliminated by God.'%exceed)
 
-    print('--------------')
-    print('')
+#    print('--------------')
+#    print('')
+
+    ################ MONKEY STORAGE ##################
+    ### THIS ADDS TO THE LIST'S SLOT FOR THE TURN THE NUMBER OF MONKEYS THAT HAVE THE STRATEGY 
+
+    for i,monkey in enumerate(monkeylist):
+        for predator in predators:
+            turnwordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)][turn]+=1
+        for vocab in monkeyvocab:
+            turnactionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)][turn]+=1
+
+
+
+
+    ################ GAME END ########################
 
     if len(monkeylist) < 100:
-        print('GAME OVER.')
+ #       print('GAME OVER.')
+        lastTurn=turn
         break
 
-input('press ENTER')
-
-wordmapCountDict=dict()
-
-for i in range(len(predators)):
-    for j in range(len(monkeyvocab)):
-        wordmapCountDict[str(predators[i].name)+'->'+str(monkeyvocab[j].value)]=0 
-
-actionmapCountDict=dict()
-
-for i in range(len(monkeyvocab)):
-    for j in range(len(monkeystates)):
-        actionmapCountDict[str(monkeyvocab[i].value)+'->'+str(monkeystates[j].value)]=0 
+print('This game took %s seconds for %d turns' % (process_time()-t,lastTurn))
+print(' ')
+input('press ENTER to print survivor maps')
 
 
 
@@ -168,7 +208,7 @@ for i in range(len(monkeyvocab)):
 # print("################")
 # print("SURVIVORS")
 # print("################")
-for i, monkey in enumerate(monkeylist[:100]):
+for i, monkey in enumerate(monkeylist):  #deleted monkeylist[:100] 
         for predator in predators:
             wordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)]+=1
         for vocab in monkeyvocab:
@@ -192,4 +232,30 @@ print(' ')
 
 for key in actionmapCountDict:
     print("%s : %d" % (key,actionmapCountDict[key]))    
+
+print(' ')
+input('press ENTER to print evolution wordmaps')
+
+for key in turnwordmapCountDict:
+    #print(key+" : "+str(turnwordmapCountDict[key][:lastTurn]))
+    plt.plot(turnwordmapCountDict[key][:lastTurn],label=key)
+
+plt.legend(loc="upper left")
+plt.title('wordmaps')
+plt.show()
+print(' ')
+
+
+input('press ENTER to print evolution actionmaps')
+for key in actionmapCountDict:
+    #print(key+" : "+str(turnactionmapCountDict[key][:lastTurn]))
+    plt.plot(turnactionmapCountDict[key][:lastTurn],label=key)    
+
+plt.legend(loc="upper left")
+plt.title('actionmaps')
+plt.show()
+print(' ')
+
+
+
 
