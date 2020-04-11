@@ -1,4 +1,5 @@
 from typing import List, Dict, Any
+import numpy as np
 import random
 
 class Item:
@@ -122,19 +123,21 @@ class Monkey:
         self.state = None
  
     def random_wordmap(self, predator_list: List[Predator], signal_list: List[MonkeySignal]) -> None:
-        wordmap = dict()
-        for predator in predator_list:
-            wordmap[predator] = random.choice(signal_list)
+        wordmap = np.zeros(len(predator_list)*len(signal_list)) ## the total combinations of predators and signals
+        for n in range(len(signal_list)): #divisions of tuple per predator 
+            wordmap[random.randrange(len(predator_list))*n,len(predator_list))*(n+1)] += 1 ## choose a signal per predator
         return wordmap
 
     def random_actionmap(self, signal_list: List[MonkeySignal], state_list: List[MonkeyState]) -> None:
-        actionmap = dict()
-        for signal in signal_list:
-            actionmap[signal] = random.choice(state_list)
+        actionmap = np.zeros(len(signal_list)*len(state_list)) ## the total combinations of signals and states
+        for n in range(len(state_list)): ## divisions of tuple per signal
+            wordmap[random.randrange(len(signal_list))*n,len(signal_list))*(n+1)] += 1 ## choose a state per signal
         return actionmap
 
-    def emmit(self, perception: Predator) -> MonkeySignal:
-        return self.wordmap[perception]
+    def emmit(self, perception: Predator) -> None: 
+        ## choose signal, that is, assuming perception is a number between 0 and len(predator_list), see in which position of that predator's section of the array there's a 1  
+        return self.wordmap[len(predator_list)*perception:len(predator_list)*(perception+1)].nonzero()[0]
+        # return self.wordmap[perception] #old one
 
     def interpret(self, heardsignal: MonkeySignal) -> None:
         return self.actionmap[heardsignal]

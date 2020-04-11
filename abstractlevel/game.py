@@ -139,11 +139,19 @@ for turn in range(nturns):
     for monkey in monkeylist:
         # TODO: witness state change
         monkey.receive(msg)
-        if monkey.state in monkeystatecounter:
-            monkeystatecounter[monkey.state] += 1
+        currentState=monkey.state
+        if currentState in monkeystatecounter:
+            monkeystatecounter[currentState] += 1
         else:
-            monkeystatecounter[monkey.state] = 0
-        if pred.survived(monkey.state):
+            monkeystatecounter[currentState] = 0
+        if pred.survived(currentState):
+            for animal in predators:
+                turnwordmapCountDict[str(animal.name)+'->'+str(monkey.wordmap[animal].value)][turn]+=1
+            for vocab in monkeyvocab:
+                actionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)]+=1
+            # turnwordmapCountDict[eagle.name+'->'+str(monkey.wordmap[eagle].value)][turn]+=1
+            # turnwordmapCountDict[nothing.name+'->'+str(monkey.wordmap[nothing].value)][turn]+=1
+            # turnwordmapCountDict[snake.name+'->'+str(monkey.wordmap[snake].value)][turn]+=1
             newmonkeylist.append(monkey)
     #print('state count:')
 #    for state, count in monkeystatecounter.items():
@@ -182,11 +190,11 @@ for turn in range(nturns):
     ################ MONKEY STORAGE ##################
     ### THIS ADDS TO THE LIST'S SLOT FOR THE TURN THE NUMBER OF MONKEYS THAT HAVE THE STRATEGY 
 
-    for i,monkey in enumerate(monkeylist):
-        for predator in predators:
-            turnwordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)][turn]+=1
-        for vocab in monkeyvocab:
-            turnactionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)][turn]+=1
+    # for i,monkey in enumerate(monkeylist):
+    #     for predator in predators:
+    #         turnwordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)][turn]+=1
+    #     for vocab in monkeyvocab:
+    #         turnactionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)][turn]+=1
 
 
 
@@ -198,63 +206,63 @@ for turn in range(nturns):
         lastTurn=turn
         break
 
-print('This game took %s seconds for %d turns' % (process_time()-t,lastTurn))
+print('This game took %s seconds for %d turns, that is %f s per turn' % (process_time()-t,lastTurn,(process_time()-t)/lastTurn))
 print(' ')
-input('press ENTER to print survivor maps')
+# input('press ENTER to print survivor maps')
 
 
 
-# print("")
+# # print("")
+# # print("################")
+# # print("SURVIVORS")
+# # print("################")
+# for i, monkey in enumerate(monkeylist):  #deleted monkeylist[:100] 
+#         for predator in predators:
+#             wordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)]+=1
+#         for vocab in monkeyvocab:
+#             actionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)]+=1
+# #    printmonkey(monkey, i)
+# #    print("")
+
 # print("################")
-# print("SURVIVORS")
+# print("Wordmap totals:")
 # print("################")
-for i, monkey in enumerate(monkeylist):  #deleted monkeylist[:100] 
-        for predator in predators:
-            wordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)]+=1
-        for vocab in monkeyvocab:
-            actionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)]+=1
-#    printmonkey(monkey, i)
-#    print("")
+# print(' ')
 
-print("################")
-print("Wordmap totals:")
-print("################")
-print(' ')
+# for key in wordmapCountDict:
+#     print("%s : %d" % (key,wordmapCountDict[key]))
 
-for key in wordmapCountDict:
-    print("%s : %d" % (key,wordmapCountDict[key]))
+# print(' ')
+# print("################")
+# print("Actionmap totals:")
+# print("################")
+# print(' ')
 
-print(' ')
-print("################")
-print("Actionmap totals:")
-print("################")
-print(' ')
+# for key in actionmapCountDict:
+#     print("%s : %d" % (key,actionmapCountDict[key]))    
 
-for key in actionmapCountDict:
-    print("%s : %d" % (key,actionmapCountDict[key]))    
+# print(' ')
+# input('press ENTER to print evolution wordmaps')
 
-print(' ')
-input('press ENTER to print evolution wordmaps')
+# for key in turnwordmapCountDict:
+#     #print(key+" : "+str(turnwordmapCountDict[key][:lastTurn]))
+#     plt.plot(turnwordmapCountDict[key][:lastTurn],label=key)
 
-for key in turnwordmapCountDict:
-    #print(key+" : "+str(turnwordmapCountDict[key][:lastTurn]))
-    plt.plot(turnwordmapCountDict[key][:lastTurn],label=key)
-
-plt.legend(loc="upper left")
-plt.title('wordmaps')
-plt.show()
-print(' ')
+# plt.legend(loc="upper left")
+# plt.title('wordmaps')
+# plt.show()
+# print(' ')
 
 
-input('press ENTER to print evolution actionmaps')
-for key in actionmapCountDict:
-    #print(key+" : "+str(turnactionmapCountDict[key][:lastTurn]))
-    plt.plot(turnactionmapCountDict[key][:lastTurn],label=key)    
+# input('press ENTER to print evolution actionmaps')
+# for key in actionmapCountDict:
+#     #print(key+" : "+str(turnactionmapCountDict[key][:lastTurn]))
+#     plt.plot(turnactionmapCountDict[key][:lastTurn],label=key)    
 
-plt.legend(loc="upper left")
-plt.title('actionmaps')
-plt.show()
-print(' ')
+# plt.legend(loc="upper left")
+# plt.title('actionmaps')
+# plt.show()
+# print(' ')
 
 
 
