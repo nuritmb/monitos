@@ -16,15 +16,15 @@ mutation_probability = 0.1
 # MONKEY VOCABULARY AND STATES
 
 monkeyvocab = [
-    MonkeySignal('we'),
-    MonkeySignal('love'),
-    MonkeySignal('jeffking')
+    MonkeySignal(1),
+    MonkeySignal(2),
+    MonkeySignal(3)
 ]
 
 monkeystates = [
-    MonkeyState('grass'),
-    MonkeyState('burrow'),
-    MonkeyState('tree')
+    MonkeyState(1),
+    MonkeyState(2),
+    MonkeyState(3)
 ]
 
 # PREDATORS
@@ -35,7 +35,7 @@ nothing = Predator(
         monkeystates[1]: 0.9,
         monkeystates[2]: 0.9 
     },
-    name='nothing'
+    id=1 #nothing
 )
 
 eagle = Predator(
@@ -44,7 +44,7 @@ eagle = Predator(
         monkeystates[1]: 0.9,
         monkeystates[2]: 0.1
     },
-    name='eagle'
+    id=2 #eagle
 )
 
 snake = Predator(
@@ -53,7 +53,7 @@ snake = Predator(
         monkeystates[1]: 0.1,
         monkeystates[2]: 0.9
     },
-    name='snake'
+    id=3 #snake
 )
 
 predators = [
@@ -71,7 +71,7 @@ monkeylist = []
 for i in range(nmonkeys):
     monkeylist.append(
         Monkey(
-            name='Jeff King %d'%(i+1),
+            id=i+1,
             predator_list=predators,
             signal_list=monkeyvocab,
             state_list=monkeystates))
@@ -83,25 +83,25 @@ wordmapCountDict=dict()
 
 for i in range(len(predators)):
     for j in range(len(monkeyvocab)):
-        wordmapCountDict[str(predators[i].name)+'->'+str(monkeyvocab[j].value)]=0 
+        wordmapCountDict[str(predators[i].id)+'->'+str(monkeyvocab[j])]=0 
 
 actionmapCountDict=dict()
 
 for i in range(len(monkeyvocab)):
     for j in range(len(monkeystates)):
-        actionmapCountDict[str(monkeyvocab[i].value)+'->'+str(monkeystates[j].value)]=0 
+        actionmapCountDict[str(monkeyvocab[i])+'->'+str(monkeystates[j])]=0 
 
 turnwordmapCountDict=dict()
 
 for i in range(len(predators)):
     for j in range(len(monkeyvocab)):
-        turnwordmapCountDict[str(predators[i].name)+'->'+str(monkeyvocab[j].value)]=[0]*nturns 
+        turnwordmapCountDict[str(predators[i].id)+'->'+str(monkeyvocab[j])]=[0]*nturns 
 
 turnactionmapCountDict=dict()
 
 for i in range(len(monkeyvocab)):
     for j in range(len(monkeystates)):
-        turnactionmapCountDict[str(monkeyvocab[i].value)+'->'+str(monkeystates[j].value)]=[0]*nturns 
+        turnactionmapCountDict[str(monkeyvocab[i])+'->'+str(monkeystates[j])]=[0]*nturns 
 
 
 
@@ -146,16 +146,16 @@ for turn in range(nturns):
             monkeystatecounter[currentState] = 0
         if pred.survived(currentState):
             for animal in predators:
-                turnwordmapCountDict[str(animal.name)+'->'+str(monkey.wordmap[animal].value)][turn]+=1
+                turnwordmapCountDict[str(animal.id)+'->'+str(monkey.wordmap[animal])][turn]+=1
             for vocab in monkeyvocab:
-                actionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)]+=1
-            # turnwordmapCountDict[eagle.name+'->'+str(monkey.wordmap[eagle].value)][turn]+=1
-            # turnwordmapCountDict[nothing.name+'->'+str(monkey.wordmap[nothing].value)][turn]+=1
-            # turnwordmapCountDict[snake.name+'->'+str(monkey.wordmap[snake].value)][turn]+=1
+                actionmapCountDict[str(vocab)+'->'+str(monkey.actionmap[vocab])]+=1
+            # turnwordmapCountDict[eagle.id+'->'+str(monkey.wordmap[eagle])][turn]+=1
+            # turnwordmapCountDict[nothing.id+'->'+str(monkey.wordmap[nothing])][turn]+=1
+            # turnwordmapCountDict[snake.id+'->'+str(monkey.wordmap[snake])][turn]+=1
             newmonkeylist.append(monkey)
     #print('state count:')
 #    for state, count in monkeystatecounter.items():
-#        print('    %d %s monkeys'%(count, state.value))
+#        print('    %d %s monkeys'%(count, state))
     #print('%d monkeys killed' % (len(monkeylist)-len(newmonkeylist)))
     #print('%d monkeys left' % len(newmonkeylist))
     monkeylist = newmonkeylist
@@ -166,7 +166,7 @@ for turn in range(nturns):
     for babymoney_i in range(nbabymonkeys):
         teacher = random.choice(monkeylist)
         baby = Monkey(
-            name='Jeff King %d'%(babymoney_i+1+len(monkeylist)),
+            id=babymoney_i+1+len(monkeylist),
             wordmap=teacher.wordmap,
             actionmap=teacher.actionmap)
         if random.random() < mutation_probability:
@@ -192,9 +192,9 @@ for turn in range(nturns):
 
     # for i,monkey in enumerate(monkeylist):
     #     for predator in predators:
-    #         turnwordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)][turn]+=1
+    #         turnwordmapCountDict[str(predator.id)+'->'+str(monkey.wordmap[predator])][turn]+=1
     #     for vocab in monkeyvocab:
-    #         turnactionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)][turn]+=1
+    #         turnactionmapCountDict[str(vocab)+'->'+str(monkey.actionmap[vocab])][turn]+=1
 
 
 
@@ -218,9 +218,9 @@ print(' ')
 # # print("################")
 # for i, monkey in enumerate(monkeylist):  #deleted monkeylist[:100] 
 #         for predator in predators:
-#             wordmapCountDict[str(predator.name)+'->'+str(monkey.wordmap[predator].value)]+=1
+#             wordmapCountDict[str(predator.id)+'->'+str(monkey.wordmap[predator])]+=1
 #         for vocab in monkeyvocab:
-#             actionmapCountDict[str(vocab.value)+'->'+str(monkey.actionmap[vocab].value)]+=1
+#             actionmapCountDict[str(vocab)+'->'+str(monkey.actionmap[vocab])]+=1
 # #    printmonkey(monkey, i)
 # #    print("")
 

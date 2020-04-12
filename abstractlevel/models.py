@@ -1,58 +1,39 @@
-from typing import List, Dict, Any
 import numpy as np
 import random
 
-class Item:
-    '''An Item
+from typing import List, Dict, Any, Union
 
-    '''
-    def __init__(self, value: Any) -> None:
-        self.value = value
-
-    def __eq__(self, other) -> bool:
-        return ((self.value == other.value) and (type(self) == type(other)))
-
-    def __hash__(self) -> int:
-        return hash((self.value, type(self)))
-
-class MonkeySignal(Item):
-    '''An item of a monkey's vocabulary
-
-    '''
-    def __init__(self, value: Any) -> None:
-        super().__init__(value)
+class MonkeySignal(int):
+    '''An item of a monkey's vocabulary'''
 
     def __repr__(self) -> str:
-        return 'Signal({value})'.format(value=self.value)
+        return 'Signal{:d}'.format(self)
 
     def __str__(self) -> str:
         return self.__repr__()
 
-class MonkeyState(Item):
-    '''A possible action of monkey upon hearing a message (e.g. hide in a bush)
-
-    '''
-    def __init__(self, value: Any) -> None:
-        super().__init__(value)
+class MonkeyState(int):
+    '''A possible action of a monkey upon hearing a message (e.g. hide in a bush)'''
 
     def __repr__(self) -> str:
-        return 'State({value})'.format(value=self.value)
+        return 'State{:d}'.format(self)
 
     def __str__(self) -> str:
         return self.__repr__()
 
 class Predator:
-    '''A predator takes a monkey's state and output's the monkey's survival probability
+    '''A predator takes a monkey's state and outputs the monkey's survival probability
 
     :param menu: A map from a monkey's state to a monkey's survival chance
     
     '''
-    def __init__(self, menu: Dict[MonkeyState, float], name: str='') -> None:
-        self.name = name
+    def __init__(self, menu: Dict[MonkeyState, float], id: int = 0) -> None:
+        self.id = id
         self.menu = menu
         self.survivalstates = self.calculatesurvivalstates()
 
     def calculatesurvivalstates(self) -> MonkeyState:
+        '''Returns the best states for surviving the predator's attack'''
         beststates = []
         bestchance = -1.0
         for monkeystate, chance in self.menu.items():
@@ -65,21 +46,24 @@ class Predator:
         return beststates
 
     def surviveprobability(self, monkeystate: MonkeyState) -> float:
+        '''Returns the survival propability of a given monkey state'''
         return self.menu[monkeystate]
 
     def survived(self, monkeystate: MonkeyState) -> bool:
+        '''Returns true if the monkey in that state survived'''
         return (random.random() < self.surviveprobability(monkeystate))
 
     def __eq__(self, other) -> bool:
-        return (self.name == other.name) and (self.menu == other.menu)
+        return self.id.__eq__(other.id)
 
     def __hash__(self) -> int:
-        return hash((self.name, frozenset(self.menu.items())))
+        return self.id
 
     def display(self, indentlevel: int=0) -> None:
+        '''Displays the predator's stats'''
         indent = ' '*4*indentlevel
         print(indent+('-'*30))
-        print(indent+self.name)
+        print(indent+'Predator({:d})'.format(self.id))
         print(indent+('-'*30))
         print(indent+'Survival Chances:')
         for state, prob in self.menu.items():
@@ -95,10 +79,10 @@ class Predator:
         for state, prob in self.menu.items():
             menurepr.append('{0}:{1:.4f}'.format(state.__repr__(), prob))
         menurepr = '{' + (', '.join(menurepr)) + '}'
-        return 'Predator({name}, menu={menu}, ss={ss})'.format(name=self.name, menu=menurepr, ss=self.survivalstates)
+        return 'Predator{id:d}(menu={menu}, ss={ss})'.format(id=self.id, menu=menurepr, ss=self.survivalstates)
 
     def __str__(self) -> str:
-        return 'Predator({})'.format(self.name)
+        return 'Predator{:d}'.format(self.id)
 
 
 class Monkey:
@@ -116,39 +100,72 @@ class Monkey:
     :param actionmap: map from (heard) words to actions
 
     '''
-    def __init__(self, name='Jeff King', predator_list: List[Predator] = None, signal_list: List[MonkeySignal] = None, state_list: List[MonkeyState] = None, wordmap: Dict[Predator, MonkeySignal] = None, actionmap: Dict[MonkeySignal, MonkeyState] = None) -> None:
-        self.name = name
+    def __init__(self, id: int = 0, predator_list: List[Predator] = None, signal_list: List[MonkeySignal] = None,
+                 state_list: List[MonkeyState] = None, wordmap: Dict[Predator, MonkeySignal] = None,
+                 actionmap: Dict[MonkeySignal, MonkeyState] = None) -> None:
+        self.id = id
         self.wordmap = (wordmap if wordmap else self.random_wordmap(predator_list, signal_list))
         self.actionmap = (actionmap if actionmap else self.random_actionmap(signal_list, state_list))
         self.state = None
  
     def random_wordmap(self, predator_list: List[Predator], signal_list: List[MonkeySignal]) -> None:
-        wordmap = np.zeros(len(predator_list)*len(signal_list)) ## the total combinations of predators and signals
-        for n in range(len(signal_list)): #divisions of tuple per predator 
-            wordmap[random.randrange(len(predator_list))*n,len(predator_list))*(n+1)] += 1 ## choose a signal per predator
+        '''Returns a random wordmap given a predator_list and a signal_list
+        
+        :param predator_list: list of predators
+        :param signal_list: list of signals
+        :returns: the wordmap linking each predator to a signal
+        
+        '''
+        wordmap = dict()
+        for predator in predator_list:
+            wordmap[predator] = random.choice(signal_list)
         return wordmap
 
     def random_actionmap(self, signal_list: List[MonkeySignal], state_list: List[MonkeyState]) -> None:
-        actionmap = np.zeros(len(signal_list)*len(state_list)) ## the total combinations of signals and states
-        for n in range(len(state_list)): ## divisions of tuple per signal
-            wordmap[random.randrange(len(signal_list))*n,len(signal_list))*(n+1)] += 1 ## choose a state per signal
+        '''Returns a random actionmap given a signal_list and a state_list
+        
+        :param signal_list: list of signals
+        :param state_list: list of states
+        :returns: the actionmap linking each signal to a state
+        
+        '''
+        actionmap = dict()
+        for signal in signal_list:
+            actionmap[signal] = random.choice(state_list)
         return actionmap
 
-    def emmit(self, perception: Predator) -> None: 
-        ## choose signal, that is, assuming perception is a number between 0 and len(predator_list), see in which position of that predator's section of the array there's a 1  
-        return self.wordmap[len(predator_list)*perception:len(predator_list)*(perception+1)].nonzero()[0]
-        # return self.wordmap[perception] #old one
+    def emmit(self, perception: Predator) -> None:
+        '''Emmits the signal linked with the perceived predator
+
+        :param perception: the perceived predator
+        :returns: the emmited signal
+
+        '''
+        return self.wordmap[perception]
 
     def interpret(self, heardsignal: MonkeySignal) -> None:
+        '''Returns the state linked to a heard signal
+        
+        :param heardsignal: the heard signal
+        :returns: the state linked to the signal in actionmap
+
+        '''
         return self.actionmap[heardsignal]
 
     def receive(self, heardsignal: MonkeySignal) -> None:
+        '''Changes to the state linked to a heard signal
+        
+        :param heardsignal: the heard signal
+        :returns: the state linked to the signal in actionmap
+
+        '''
         self.state = self.interpret(heardsignal)
 
     def display(self, indentlevel=0):
+        '''Displays the monkeys's stats'''
         indent = ' '*4*indentlevel
         print(indent+('-'*30))
-        print(indent+self.name)
+        print(indent+'Monkey({:d})'.format(self.id))
         print(indent+('-'*30))
         print(indent+'Monkey Wordmap:')
         for pred, sig in self.wordmap.items():
@@ -168,12 +185,87 @@ class Monkey:
         for sig, act in self.actionmap.items():
             actionmaprepr.append('{0}:{1}'.format(sig.__repr__(), act.__repr__()))
         actionmaprepr = '{' + (', '.join(actionmaprepr)) + '}'
-        return 'Monkey(name={name}, wordmap={wordmap}, actionmap={actionmap}, state={state})'.format(
-            name=self.name,
+        return 'Monkey{id:d}(wordmap={wordmap}, actionmap={actionmap}, state={state})'.format(
+            id=self.id,
             wordmap=wordmaprepr,
             actionmap=actionmaprepr,
             state=self.state.__repr__()
         )
 
     def __str__(self):
-        return 'Monkey({})'.format(self.name)
+        return 'Monkey{:d}'.format(self.id)
+
+
+class PredArray(np.ndarray):
+    '''A numpy array representing an array of predators
+
+    This is a two-dimensional array of numbers in [0,1] in which the first dimension
+    is the predator and the second dimension is the state. Thus, array[p,s] should
+    be the probability of surviving against predator number p in state number s. The
+    array can be created either by explicitly specifying the array, or by passing a
+    list of predator and (optional) list of states
+
+    :param array: an array of ones and zeros
+    :param predator_list: a list of predators
+    :param state_list:
+    
+    '''
+
+    def __init__(self, array: List[List[List[int]]] = None,
+        predator_list: List[Predator] = None, state_list: List[MonkeyState] = None
+    ) -> None:
+        if array:
+            # First method
+            super().__init__(array)
+        else:
+            # Second method
+            if not predator_list:
+                raise ValueError('no array or list of predators was given')
+            if not state_list:
+                state_list = set()
+                for predator in predator_list:
+                    for state in predator.menu:
+                        state_list.add(state)
+                state_list = list(state_list)
+            arr = np.ones((len(predator_list), len(state_list)))
+            for i, predator in enumerate(predator_list):
+                for j, state in enumerate(state_list):
+                    arr[i,j] = predator.get(state, 1.0)
+            self = arr
+        if len(self.shape) != 2:
+            raise ValueError('the array does not have the correct dimensions')
+
+class MonkeyArray:
+    '''Basically two numpy array representing an array of monkeys
+
+    This are two three-dimensional arrays of 0s and 1s in which array1[m, p, s] = 1 if the
+    monkey number m emmits the signal number s when the predator number p is perceived
+    and 0 otherwise and array2[m, s, a] = 1 if the monkey number m changes to state a when
+    the signal s is heard and 0 otherwise.
+
+    The arrays can be created by either explicitly passing the array
+    values and can be randomly initialized by passing the number of monkeys, a
+    list of predators and a list of signals.
+
+    :param wordarray: 
+    :param actionarray:
+    :param predator_list: list of predators (for random initialization)
+    :param signal_list: list of signals (for random initialization)
+    :param state_list: list of states (for random initialization)
+
+    '''
+    def __init__(
+        self, wordarray: List[List[List[int]]] = None, actionarray: List[List[List[int]]] = None,
+        predator_list: Union[List[Predator], PredArray] = None, signal_list: List[MonkeySignal] = None,
+        state_list: List[MonkeyState] = None, predarray: PredArray = None
+    ) -> None:
+        if (wordarray is not None) and (actionarray is not None):
+            # First method
+            self.wordarray = wordarray if isinstance(wordarray, np.ndarray) else np.ndarray(wordarray)
+            self.actionarray = actionarray if isinstance(actionarray, np.ndarray) else np.ndarray(actionarray)
+        else:
+            # Second method
+            if not predator_list:
+                raise ValueError('no array or list of predators was given')
+            # TODO
+            
