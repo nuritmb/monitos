@@ -12,6 +12,7 @@ class MonkeySignal(int):
     def __str__(self) -> str:
         return self.__repr__()
 
+
 class MonkeyState(int):
     '''A possible action of a monkey upon hearing a message (e.g. hide in a bush)'''
 
@@ -20,6 +21,7 @@ class MonkeyState(int):
 
     def __str__(self) -> str:
         return self.__repr__()
+
 
 class Predator:
     '''A predator takes a monkey's state and outputs the monkey's survival probability
@@ -211,9 +213,11 @@ class PredArray(np.ndarray):
     
     '''
 
-    def __init__(self, array: List[List[List[int]]] = None,
-        predator_list: List[Predator] = None, state_list: List[MonkeyState] = None
-    ) -> None:
+    def __init__(
+        self,
+        array: List[List[List[int]]] = None,
+        predator_list: List[Predator] = None,
+        state_list: List[MonkeyState] = None) -> None:
         if array:
             # First method
             super().__init__(array)
@@ -238,34 +242,65 @@ class PredArray(np.ndarray):
 class MonkeyArray:
     '''Basically two numpy array representing an array of monkeys
 
-    This are two three-dimensional arrays of 0s and 1s in which array1[m, p, s] = 1 if the
-    monkey number m emmits the signal number s when the predator number p is perceived
-    and 0 otherwise and array2[m, s, a] = 1 if the monkey number m changes to state a when
+    This are two three-dimensional arrays of 0s and 1s: wordarray and actionarray.
+    We have wordarray[m, p, s] = 1 if the monkey number m emmits the signal number
+    s when the predator number p is perceived and 0 otherwise and
+    actionarray[m, s, a] = 1 if the monkey number m changes to state number a when
     the signal s is heard and 0 otherwise.
 
     The arrays can be created by either explicitly passing the array
-    values and can be randomly initialized by passing the number of monkeys, a
-    list of predators and a list of signals.
+    values or can be randomly initialized by passing the number of monkeys,
+    predators, signals and states.
 
-    :param wordarray: 
-    :param actionarray:
-    :param predator_list: list of predators (for random initialization)
-    :param signal_list: list of signals (for random initialization)
-    :param state_list: list of states (for random initialization)
+    :param wordarray: array representing the monkey's word behaviour
+    :param actionarray: array representing the monkey's action behaviour
+    :param nmonkeys: number of monkeys (form random initialization)
+    :param npredators: number of predators (for random initialization)
+    :param nsignals: number of signals (for random initialization)
+    :param nstates: number of states (for random initialization)
 
     '''
     def __init__(
-        self, wordarray: List[List[List[int]]] = None, actionarray: List[List[List[int]]] = None,
-        predator_list: Union[List[Predator], PredArray] = None, signal_list: List[MonkeySignal] = None,
-        state_list: List[MonkeyState] = None, predarray: PredArray = None
-    ) -> None:
+        self,
+        wordarray: List[List[List[int]]] = None,
+        actionarray: List[List[List[int]]] = None,
+        npredators: int = None,
+        nsignals: int = None,
+        nstates: int = None,
+        nmonkeys: int = None) -> None:
         if (wordarray is not None) and (actionarray is not None):
             # First method
             self.wordarray = wordarray if isinstance(wordarray, np.ndarray) else np.ndarray(wordarray)
             self.actionarray = actionarray if isinstance(actionarray, np.ndarray) else np.ndarray(actionarray)
         else:
             # Second method
-            if not predator_list:
-                raise ValueError('no array or list of predators was given')
-            # TODO
+            if (not npredators) or (npredators < 0):
+                raise ValueError('no array or positive number of predators was given')
+            if not nsignals or (nsignals < 0):
+                raise ValueError('no array or positive number of signals was given')
+            if not nstates or (nstates < 0):
+                raise ValueError('no array or positive number of states was given')
+            if not nmonkeys or (nmonkeys < 0):
+                raise ValueError('no array or positive number of monkeys was given')
+            # Builds arrays
+            wordarrays = []
+            actionarrays= []
+            for m in range(nmonkeys):
+                # Builds word array (1, #p, #s)
+                wordarraylist = []
+                for p in range(npredators):
+                    wordarraylist.append(
+                        np.append(np.zeros(nsignals-1), [1]))
+                    wordarraylist[-1].sort() # TODO: check why this isn't working
+                wordarrays.append(np.column_stack(wordarraylist, axis=0))
+                # Builds action array (1, #s, #a)
+                actionarraylist = []
+                for s in range(nsignals):
+                    actionarraylist.append(
+                            np.append(np.zeros(nstates-1), [1]))
+                    actionarraylist[-1].sort() # TODO: check why this isn't working
+                actionarrays.append(np.column_stack(actionarraylist, axis=0))
+            # Assign arrays
+            self.wordarray = np.stack(wordarrays, axis=0)
+            self.actionarray = np.stack(actionarrays, axis=0)
             
