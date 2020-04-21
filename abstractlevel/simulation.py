@@ -163,7 +163,7 @@ class Simulation:
         self.delete_monkey_wordmap(monkey)
         self.delete_monkey_actionmap(monkey)
 
-    def get_wordmap_convention(self):
+    def get_wordmap_convention(self) -> Dict[Predator, MonkeySignal]:
         '''Gets the wordmap convention from the general count in wordmap_count
 
         :returns: word convention for each predator
@@ -181,7 +181,7 @@ class Simulation:
             wordmap_convention[pred] = convention
         return wordmap_convention
 
-    def get_actionmap_convention(self):
+    def get_actionmap_convention(self) -> Dict[MonkeySignal, MonkeyState]:
         '''Gets the actionmap convention from the general count in actionmap_count
 
         :returns: action convention for each word

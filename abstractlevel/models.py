@@ -58,7 +58,7 @@ class Predator:
         '''Returns true if the monkey in that state survived'''
         return (random.random() < self.surviveprobability(monkeystate))
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: 'Predator') -> bool:
         return self.id.__eq__(other.id)
 
     def __hash__(self) -> int:
@@ -166,7 +166,7 @@ class Monkey:
         '''
         self.state = self.interpret(heardsignal)
 
-    def display(self, indentlevel=0):
+    def display(self, indentlevel: int=0) -> None:
         '''Displays the monkeys's stats'''
         indent = (' '*4*indentlevel if indentlevel else '')
         print(indent+('-'*30))
@@ -181,7 +181,7 @@ class Monkey:
             print(indent+sig.__str__()+' -> '+act.__str__())
         print(indent+('-'*30))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         wordmaprepr = []
         for pred, sig in self.wordmap.items():
             wordmaprepr.append('{0}:{1}'.format(pred.__repr__(), sig.__repr__()))
@@ -197,7 +197,7 @@ class Monkey:
             state=self.state.__repr__()
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Monkey{:d}'.format(self.id)
 
 
@@ -410,10 +410,10 @@ class MonkeyArray:
     def get_monkey(self, m: int) -> Tuple[np.ndarray, np.ndarray]:
         return (self.wordarray[m], self.actionarray[m])
 
-    def emmit(self, predator: int):
+    def emmit(self, predator: int) -> np.ndarray:
         return self.wordarray[:, predator, :]
 
-    def interpret(self, heardsignal: int):
+    def interpret(self, heardsignal: int) -> np.ndarray:
         return self.actionarray[:, heardsignal, :]
 
     def to_monkey_list(
