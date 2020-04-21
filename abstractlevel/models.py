@@ -1,7 +1,10 @@
 import numpy as np
 import random
+import time
 
-from typing import List, Dict, Any, Union
+from typing import Tuple, List, Dict, Any, Union
+
+from .utilities import shuffle_along_axis
 
 class MonkeySignal(int):
     '''An item of a monkey's vocabulary'''
@@ -110,7 +113,7 @@ class Monkey:
         self.actionmap = (actionmap if actionmap else self.random_actionmap(signal_list, state_list))
         self.state = None
  
-    def random_wordmap(self, predator_list: List[Predator], signal_list: List[MonkeySignal]) -> None:
+    def random_wordmap(self, predator_list: List[Predator], signal_list: List[MonkeySignal]) -> Dict[Predator, MonkeySignal]:
         '''Returns a random wordmap given a predator_list and a signal_list
         
         :param predator_list: list of predators
@@ -123,7 +126,7 @@ class Monkey:
             wordmap[predator] = random.choice(signal_list)
         return wordmap
 
-    def random_actionmap(self, signal_list: List[MonkeySignal], state_list: List[MonkeyState]) -> None:
+    def random_actionmap(self, signal_list: List[MonkeySignal], state_list: List[MonkeyState]) -> Dict[MonkeySignal, MonkeyState]:
         '''Returns a random actionmap given a signal_list and a state_list
         
         :param signal_list: list of signals
@@ -136,7 +139,7 @@ class Monkey:
             actionmap[signal] = random.choice(state_list)
         return actionmap
 
-    def emmit(self, perception: Predator) -> None:
+    def emmit(self, perception: Predator) -> MonkeySignal:
         '''Emmits the signal linked with the perceived predator
 
         :param perception: the perceived predator
@@ -198,7 +201,7 @@ class Monkey:
         return 'Monkey{:d}'.format(self.id)
 
 
-class PredArray(np.ndarray):
+class PredArray:
     '''A numpy array representing an array of predators
 
     This is a two-dimensional array of numbers in [0,1] in which the first dimension
@@ -215,12 +218,12 @@ class PredArray(np.ndarray):
 
     def __init__(
         self,
-        array: List[List[List[int]]] = None,
+        array: List[List[float]] = None,
         predator_list: List[Predator] = None,
         state_list: List[MonkeyState] = None) -> None:
         if array:
             # First method
-            super().__init__(array)
+            self.array = np.array(array)
         else:
             # Second method
             if not predator_list:
@@ -234,10 +237,39 @@ class PredArray(np.ndarray):
             arr = np.ones((len(predator_list), len(state_list)))
             for i, predator in enumerate(predator_list):
                 for j, state in enumerate(state_list):
-                    arr[i,j] = predator.get(state, 1.0)
-            self = arr
-        if len(self.shape) != 2:
-            raise ValueError('the array does not have the correct dimensions')
+                    arr[i,j] = predator.menu.get(state, 1.0)
+            self.array = arr
+        self.validate()
+    
+    def validate(self) -> None:
+        if len(self.array.shape) != 2:
+            raise ValueError('the array does not have the correct dimensions (m, n)! current dimensions are {0}'.format(self.shape))
+        if np.amax(self.array) > 1.0:
+            raise ValueError('the array has values grater than 1.0')
+        if np.amin(self.array) < 0.0:
+            raise ValueError('the array has values lower than than 1.0')
+
+    @property
+    def numpredators(self) -> int:
+        return self.array.shape[0]
+
+    @property
+    def numstates(self) -> int:
+        return self.array.shape[1]
+
+    def to_predator_list(self, state_list=None) -> List[Predator]:
+        if not state_list:
+            state_list = []
+            for i in range(self.numstates):
+                state_list.append(MonkeyState(i))
+        predator_list = []
+        for p in range(self.numpredators):
+            menu = dict()
+            for s, state in enumerate(state_list):
+                menu[state] = self.array[p,s]
+            predator_list.append(Predator(menu, id=p))
+        return predator_list
+
 
 class MonkeyArray:
     '''Basically two numpy array representing an array of monkeys
@@ -282,25 +314,74 @@ class MonkeyArray:
                 raise ValueError('no array or positive number of states was given')
             if not nmonkeys or (nmonkeys < 0):
                 raise ValueError('no array or positive number of monkeys was given')
-            # Builds arrays
-            wordarrays = []
-            actionarrays= []
-            for m in range(nmonkeys):
-                # Builds word array (1, #p, #s)
-                wordarraylist = []
-                for p in range(npredators):
-                    wordarraylist.append(
-                        np.append(np.zeros(nsignals-1), [1]))
-                    wordarraylist[-1].sort() # TODO: check why this isn't working
-                wordarrays.append(np.column_stack(wordarraylist, axis=0))
-                # Builds action array (1, #s, #a)
-                actionarraylist = []
-                for s in range(nsignals):
-                    actionarraylist.append(
-                            np.append(np.zeros(nstates-1), [1]))
-                    actionarraylist[-1].sort() # TODO: check why this isn't working
-                actionarrays.append(np.column_stack(actionarraylist, axis=0))
             # Assign arrays
-            self.wordarray = np.stack(wordarrays, axis=0)
-            self.actionarray = np.stack(actionarrays, axis=0)
-            
+            self.wordarray = shuffle_along_axis(np.concatenate((np.zeros((nmonkeys, npredators, nsignals-1)), np.ones((nmonkeys, npredators, 1))), axis=2), axis=2)
+            self.actionarray = shuffle_along_axis(np.concatenate((np.zeros((nmonkeys, nsignals, nstates-1)), np.ones((nmonkeys, nsignals, 1))), axis=2), axis=2)
+        # Validate data
+        self.validate(nmonkeys=nmonkeys, npredators=npredators, nsignals=nsignals, nstates=nstates)
+
+    def validate(self, nmonkeys: int, npredators: int, nsignals: int, nstates: int) -> None:
+        if len(self.wordarray.shape) != 3:
+            raise ValueError('wordarray must be a 3-dimensional matrix! (it is an array of shape %s)'%self.wordarray.shape)
+        if not np.array_equal(np.sum(self.wordarray, axis=2), np.ones((nmonkeys, npredators))):
+            raise ValueError('wordarray does not fulfill the uniqueness condition for a wordmap')
+        if len(self.actionarray.shape) != 3:
+            raise ValueError('actionarray must be a 3-dimensional matrix! (it is an array of shape %s)'%self.actionarray.shape)
+        if not np.array_equal(np.sum(self.actionarray, axis=2), np.ones((nmonkeys, nsignals))):
+            raise ValueError('actionarray does not fulfill the uniqueness condition for an actionmap')
+
+    @property
+    def shape(self) -> Tuple[Tuple[int]]:
+        return (self.wordarray.shape, self.actionarray.shape)
+
+    @property
+    def pashape(self) -> Tuple[Tuple[Tuple[int]]]:
+        wshape, ashape = self.shape
+        return ((wshape[1], wshape[2]), (ashape[1], ashape[2]))
+
+    @property
+    def nummonkeys(self) -> int:
+        return self.wordarray.shape[0]
+
+    @property
+    def numpredators(self) -> int:
+        return self.wordarray.shape[1]
+
+    @property
+    def numsignals(self) -> int:
+        return self.actionarray.shape[1]
+
+    @property
+    def numstates(self) -> int:
+        return self.actionarray.shape[2]
+
+    def concatenate(self, other: 'MonkeyArray') -> None:
+        if type(other) is not type(self):
+            raise TypeError('concatenated entity must be a MonkeyArray')
+        if self.pashape != other.pashape:
+            raise ValueError('the concatendated arrays must have the same predator-state shape! actual is {0}, concatenated is {1}'.format(
+                self.shape,
+                other.shape))
+        self.wordarray = np.concatenate((self.wordarray, other.wordarray), axis=0)
+        self.actionarray = np.concatenate((self.actionarray, other.actionarray), axis=0)
+
+    def create_monkeys(self, number: int) -> None:
+        added_monkeys = type(self)(
+            npredators=self.numpredators,
+            nsignals=self.numsignals,
+            nstates=self.numstates,
+            nmonkeys=number)
+        self.concatenate(added_monkeys)
+
+    def emmit(self, predator: int):
+        return self.wordarray[:, predator, :]
+
+    def interpret(self, heardsignal: int):
+        return self.actionarray[:, heardsignal, :]
+
+    def to_monkey_list(
+        self,
+        predator_list: List[Predator] = None,
+        signal_list: List[MonkeySignal] = None,
+        state_list: List[MonkeyState] = None) -> List[Monkey]:
+        0 #TODO
