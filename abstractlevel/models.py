@@ -168,9 +168,9 @@ class Monkey:
 
     def display(self, indentlevel=0):
         '''Displays the monkeys's stats'''
-        indent = ' '*4*indentlevel
+        indent = (' '*4*indentlevel if indentlevel else '')
         print(indent+('-'*30))
-        print(indent+'Monkey({:d})'.format(self.id))
+        print(indent+'Monkey{:d}'.format(self.id))
         print(indent+('-'*30))
         print(indent+'Monkey Wordmap:')
         for pred, sig in self.wordmap.items():
@@ -299,12 +299,13 @@ class MonkeyArray:
         npredators: int = None,
         nsignals: int = None,
         nstates: int = None,
-        nmonkeys: int = None) -> None:
+        nmonkeys: int = None,
+        monkey_list: List[Monkey] = []) -> None:
         if (wordarray is not None) and (actionarray is not None):
             # First method
             self.wordarray = wordarray if isinstance(wordarray, np.ndarray) else np.ndarray(wordarray)
             self.actionarray = actionarray if isinstance(actionarray, np.ndarray) else np.ndarray(actionarray)
-        else:
+        elif (npredators is not None) and (nsignals is not None) and (nstates is not None) and (nmonkeys is not None):
             # Second method
             if (not npredators) or (npredators < 0):
                 raise ValueError('no array or positive number of predators was given')
@@ -317,18 +318,51 @@ class MonkeyArray:
             # Assign arrays
             self.wordarray = shuffle_along_axis(np.concatenate((np.zeros((nmonkeys, npredators, nsignals-1)), np.ones((nmonkeys, npredators, 1))), axis=2), axis=2)
             self.actionarray = shuffle_along_axis(np.concatenate((np.zeros((nmonkeys, nsignals, nstates-1)), np.ones((nmonkeys, nsignals, 1))), axis=2), axis=2)
+        elif monkey_list:
+            # Third method
+            # Step 1: Initialize lists
+            predator_list = set()
+            signal_list = set()
+            state_list = set()
+            for mk in monkey_list:
+                for predator in mk.wordmap:
+                    predator_list.add(predator)
+                for signal, action in mk.actionmap.items():
+                    signal_list.add(signal)
+                    state_list.add(action)
+            predator_list = list(predator_list)
+            signal_list = list(signal_list)
+            state_list = list(state_list)
+            # Step 2: construct arrays
+            wordarray = []
+            actionarray = []
+            for mk in monkey_list:
+                wordmatrix = np.zeros((len(predator_list), len(signal_list)))
+                actionmatrix = np.zeros((len(signal_list), len(state_list)))
+                for predator, signal in mk.wordmap.items():
+                    wordmatrix[predator_list.index(predator), signal_list.index(signal)] = 1.0
+                for signal, action in mk.actionmap.items():
+                    actionmatrix[signal_list.index(signal), state_list.index(action)] = 1.0
+                wordarray.append(wordmatrix)
+                actionarray.append(actionmatrix)
+            self.wordarray = np.stack(wordarray, axis=0)
+            self.actionarray = np.stack(actionarray, axis=0)
+        else:
+            raise ValueError('not enough arguments for MonkeyArray initialization were given')       
         # Validate data
-        self.validate(nmonkeys=nmonkeys, npredators=npredators, nsignals=nsignals, nstates=nstates)
+        self.validate(nmonkeys=nmonkeys, npredators=npredators, nsignals=nsignals)
 
-    def validate(self, nmonkeys: int, npredators: int, nsignals: int, nstates: int) -> None:
+    def validate(self, nmonkeys: int, npredators: int, nsignals: int) -> None:
         if len(self.wordarray.shape) != 3:
             raise ValueError('wordarray must be a 3-dimensional matrix! (it is an array of shape %s)'%self.wordarray.shape)
-        if not np.array_equal(np.sum(self.wordarray, axis=2), np.ones((nmonkeys, npredators))):
-            raise ValueError('wordarray does not fulfill the uniqueness condition for a wordmap')
+        if (nmonkeys is not None) and (npredators is not None):
+            if not np.array_equal(np.sum(self.wordarray, axis=2), np.ones((nmonkeys, npredators))):
+                raise ValueError('wordarray does not fulfill the uniqueness condition for a wordmap')
         if len(self.actionarray.shape) != 3:
             raise ValueError('actionarray must be a 3-dimensional matrix! (it is an array of shape %s)'%self.actionarray.shape)
-        if not np.array_equal(np.sum(self.actionarray, axis=2), np.ones((nmonkeys, nsignals))):
-            raise ValueError('actionarray does not fulfill the uniqueness condition for an actionmap')
+        if (nmonkeys is not None) and (nsignals is not None):
+            if not np.array_equal(np.sum(self.actionarray, axis=2), np.ones((nmonkeys, nsignals))):
+                raise ValueError('actionarray does not fulfill the uniqueness condition for an actionmap')
 
     @property
     def shape(self) -> Tuple[Tuple[int]]:
@@ -373,6 +407,9 @@ class MonkeyArray:
             nmonkeys=number)
         self.concatenate(added_monkeys)
 
+    def get_monkey(self, m: int) -> Tuple[np.ndarray, np.ndarray]:
+        return (self.wordarray[m], self.actionarray[m])
+
     def emmit(self, predator: int):
         return self.wordarray[:, predator, :]
 
@@ -381,7 +418,25 @@ class MonkeyArray:
 
     def to_monkey_list(
         self,
-        predator_list: List[Predator] = None,
+        predator_list: List[Predator],
         signal_list: List[MonkeySignal] = None,
         state_list: List[MonkeyState] = None) -> List[Monkey]:
-        0 #TODO
+        if not signal_list:
+            signal_list = []
+            for i in range(self.numsignals):
+                signal_list.append(MonkeySignal(i))
+        if not state_list:
+            state_list = []
+            for i in range(self.numstates):
+                state_list.append(MonkeyState(i))
+        monkey_list = []
+        for m in range(self.nummonkeys):
+            mwa, maa = self.get_monkey(m)
+            wordmap = {}
+            for p in range(mwa.shape[0]):
+                wordmap[predator_list[p]] = signal_list[np.argmax(mwa[p])]
+            actionmap = {}
+            for s in range(maa.shape[0]):
+                actionmap[signal_list[s]] = state_list[np.argmax(maa[s])]
+            monkey_list.append(Monkey(id=m, wordmap=wordmap, actionmap=actionmap))
+        return monkey_list
