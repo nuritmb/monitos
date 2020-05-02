@@ -378,7 +378,7 @@ class MonkeyArray:
             if not nstates or (nstates < 0):
                 raise ValueError(
                     'no array or positive number of states was given')
-            if not nmonkeys or (nmonkeys < 0):
+            if (nmonkeys is None) or (nmonkeys < 0):
                 raise ValueError(
                     'no array or positive number of monkeys was given')
             # Assign arrays
@@ -707,21 +707,22 @@ class Game:
             nsignals=self.nsignals,
             nstates=self.nstates,
             nmonkeys=self.nmonkeys)
+        # Measure turns
+        self.turns = 0
 
     def ending_message(
             self,
             nturns: int,
-            ended_successfully: bool,
             duration: float) -> None:
-        if ended_successfully:
+        if self.turns >= nturns:
             message = 'All turns {nturns:d} have passed. Game ended with {nmonk:d} monkeys.'.format(
                 nturns=nturns, nmonk=self.monkeyarray.nummonkeys)
         else:
             message = 'There are less than {nmonk:d} monkeys. Game ended in {nturns:d} turns.'.format(
-                nmonk=self.min_monkeys, nturns=nturns)
+                nmonk=self.min_monkeys, nturns=self.turns)
         message += ' Duration: {dur:.4f} ({durpt:.0f} ms per turn)'.format(
             dur=duration,
-            durpt=1000 * duration / nturns)
+            durpt=1000 * duration / self.turns)
         print(message)
 
     def run(self, nturns: int) -> None:
@@ -733,6 +734,8 @@ class Game:
         print('Game started.')
         t1 = time.time()
         for i in range(nturns):
+            # Increment turns
+            self.turns += 1
             # Spawn predator
             pred = self.predarray.spawn()
             # Witnessing phase
@@ -740,20 +743,24 @@ class Game:
             # Hunting phase
             survivors = self.predarray.hunt(pred, statearray)
             self.monkeyarray.survive(survivors)
+            # Conditional break
             if self.monkeyarray.nummonkeys < self.min_monkeys:
-                duration = time.time() - t1
-                self.ending_message(
-                    nturns=i,
-                    ended_successfully=False,
-                    duration=duration)
-                return
+                break
             # Reproductive phase
             self.monkeyarray.reproduce(
                 self.rep_rate,
                 self.mut_rate,
                 max_monkeys=self.nmonkeys)
+        # Print ending message
         duration = time.time() - t1
         self.ending_message(
             nturns=nturns,
-            ended_successfully=True,
             duration=duration)
+
+    def reset(self):
+        self.monkeyarray = MonkeyArray(
+            npredators=self.predarray.numpredators,
+            nsignals=self.nsignals,
+            nstates=self.nstates,
+            nmonkeys=self.nmonkeys)
+        self.turns = 0
