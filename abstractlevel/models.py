@@ -509,6 +509,46 @@ class MonkeyArray:
         '''Returns the number of possible monkey states'''
         return self.actionarray.shape[2]
 
+    @property
+    def wordcount(self) -> np.ndarray:
+        '''Counts how many mappings of a signal there are for each predator
+
+        The result is a matrix W, where W[p,s] is the number of monkeys
+        that associate the predator p with the signal s.
+
+        '''
+        return np.sum(self.wordarray, axis=0)
+
+    @property
+    def wordconvention(self) -> np.ndarray:
+        '''Returns the word convention for each predator
+
+        The result is an array W, where W[p] is the index of the signal
+        convention for predator p
+
+        '''
+        return np.argmax(self.wordcount, axis=1)
+
+    @property
+    def actioncount(self) -> np.ndarray:
+        '''Counts how many mappings of an action/state there are for each signal
+
+        The result is a matrix A, where A[s,a] is the number of monkeys
+        that associate the signal s with the action/state a.
+
+        '''
+        return np.sum(self.actionarray, axis=0)
+
+    @property
+    def actionconvention(self) -> np.ndarray:
+        '''Returns the word convention for each predator
+
+        The result is an array W, where W[p] is the index of the signal
+        convention for predator p
+
+        '''
+        return np.argmax(self.actioncount, axis=1)
+
     def concatenate(self, other: 'MonkeyArray') -> None:
         '''Concatenates *self* with another MonkeyArray object'''
         if not isinstance(other, type(self)):
@@ -596,7 +636,11 @@ class MonkeyArray:
         self.wordarray = self.wordarray[surviving_list]
         self.actionarray = self.actionarray[surviving_list]
 
-    def reproduce(self, rep_rate: float, mut_rate: float) -> None:
+    def reproduce(
+            self,
+            rep_rate: float,
+            mut_rate: float,
+            max_monkeys: int = np.inf) -> None:
         '''Simulates the reporduction phase
 
         :param rep_rate: proportion of monkeys in the next generation relative to the current one
@@ -613,3 +657,103 @@ class MonkeyArray:
             actionarray=self.actionarray[choice__no_mutation])
         self.concatenate(normalbabies)
         self.create_monkeys(number__mutation)
+        if self.nummonkeys > max_monkeys:
+            self.wordarray = self.wordarray[:max_monkeys]
+            self.actionarray = self.actionarray[:max_monkeys]
+
+
+class Game:
+    '''Class which contains paramaters for a game simulation
+
+    :param nmonkeys: initial and max number of monkeys
+    :param nsignals: number of signals
+    :param nstates: number of states
+    :param predarray: initial and max number of monkeys
+    :param rep_rate: rate of reprodiction
+    :param mut_rate: chance of random mutation in a generated monkey
+    :param min_monkeys: minimum number of monkeys for the game to continue
+    :param archive_cicle: integer representing how many turns until the state of the game is archived
+    :param delete_only_elderly: if True, it will delete the oldest monkeys when adjusting for overpopulation
+    :param archive_maps: if True, monkey maps are archived along with the gamestate
+
+    '''
+
+    def __init__(
+            self,
+            nmonkeys: int,
+            nsignals: int,
+            nstates: int,
+            predarray: PredArray,
+            rep_rate: float,
+            mut_rate: float,
+            min_monkeys: int = 1,
+            archive_cicle: int = 100,
+            delete_only_elderly: bool = False,
+            archive_maps: bool = False):
+        # Received parameters
+        self.nmonkeys = nmonkeys
+        self.nsignals = nsignals
+        self.nstates = nstates
+        self.predarray = predarray
+        self.rep_rate = rep_rate
+        self.mut_rate = mut_rate
+        self.min_monkeys = min_monkeys
+        self.archive_cicle = archive_cicle
+        self.delete_only_elderly = delete_only_elderly
+        self.archive_maps = archive_maps
+        # Calculated parameters
+        self.monkeyarray = MonkeyArray(
+            npredators=self.predarray.numpredators,
+            nsignals=self.nsignals,
+            nstates=self.nstates,
+            nmonkeys=self.nmonkeys)
+
+    def ending_message(
+            self,
+            nturns: int,
+            ended_successfully: bool,
+            duration: float) -> None:
+        if ended_successfully:
+            message = 'All turns {nturns:d} have passed. Game ended with {nmonk:d} monkeys.'.format(
+                nturns=nturns, nmonk=self.monkeyarray.nummonkeys)
+        else:
+            message = 'There are less than {nmonk:d} monkeys. Game ended in {nturns:d} turns.'.format(
+                nmonk=self.min_monkeys, nturns=nturns)
+        message += ' Duration: {dur:.4f} ({durpt:.0f} ms per turn)'.format(
+            dur=duration,
+            durpt=1000 * duration / nturns)
+        print(message)
+
+    def run(self, nturns: int) -> None:
+        '''Runs the game which forcefully ends after *nturns* turns or when less than min_monkeys remain
+
+        :param nturns: maximum number of turns until forceful termination of the game
+
+        '''
+        print('Game started.')
+        t1 = time.time()
+        for i in range(nturns):
+            # Spawn predator
+            pred = self.predarray.spawn()
+            # Witnessing phase
+            statearray = self.monkeyarray.witness(pred)
+            # Hunting phase
+            survivors = self.predarray.hunt(pred, statearray)
+            self.monkeyarray.survive(survivors)
+            if self.monkeyarray.nummonkeys < self.min_monkeys:
+                duration = time.time() - t1
+                self.ending_message(
+                    nturns=i,
+                    ended_successfully=False,
+                    duration=duration)
+                return
+            # Reproductive phase
+            self.monkeyarray.reproduce(
+                self.rep_rate,
+                self.mut_rate,
+                max_monkeys=self.nmonkeys)
+        duration = time.time() - t1
+        self.ending_message(
+            nturns=nturns,
+            ended_successfully=True,
+            duration=duration)

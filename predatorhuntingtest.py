@@ -11,7 +11,7 @@ nstates = 7
 nmonkeys = 100000
 random_predator = np.random.choice(npredators)
 
-# Simulation
+# Simulation Initialization
 
 monkey_signals = []
 for i in range(nsignals):
@@ -38,7 +38,7 @@ sim = Simulation(
     state_list=monkey_states)
 sim.create_monkeys()
 
-# MonkeyArray
+# MonkeyArray Initialization
 
 ma = MonkeyArray(
     npredators=npredators,
@@ -47,6 +47,7 @@ ma = MonkeyArray(
     nmonkeys=nmonkeys)
 
 # Hunting phase simulation
+
 pred = sim.predator_list[random_predator]
 witness = sim.get_random_monkey()
 message = witness.emmit(pred)
@@ -59,11 +60,17 @@ for monkey in sim.monkey_list:
     if pred.survived(monkey.state):
         new_monkey_list.append(monkey)
 t2 = time.time()
-print('Standard: {0:.0f} ms'.format((t2 - t1) * 1000000))
+print('Standard: {0:.0f} μs ({1:.2f} μs per monkey)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / nmonkeys
+))
 
 monkeystatearray = ma.witness(random_predator)
 t1 = time.time()
 survived = predarray.hunt(random_predator, monkeystatearray)
 ma.survive(survived)
 t2 = time.time()
-print('Vectorized: {0:.0f} ms'.format((t2 - t1) * 1000000))
+print('Vectorized: {0:.0f} μs ({1:.2f} μs per monkey)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / nmonkeys
+))

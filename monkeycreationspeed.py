@@ -3,7 +3,11 @@ import time
 from abstractlevel.models import Monkey, MonkeySignal, MonkeyState, MonkeyArray, Predator
 from abstractlevel.simulation import Simulation
 
-print('Normal creation:')
+# Parameters
+nmonkeys = 1000000
+
+# Initialization
+
 signal_list = [
     MonkeySignal(1),
     MonkeySignal(2),
@@ -28,8 +32,8 @@ predators = [
             state_list[2]: 0.99
         })]
 
-game = Simulation(
-    nmonkeys=1000000,
+sim = Simulation(
+    nmonkeys=nmonkeys,
     rep_rate=1.2,
     mut_prob=0.05,
     predator_dict={
@@ -41,19 +45,24 @@ game = Simulation(
     min_monkeys=100,
     archive_maps=False)
 
-t1 = time.time()
-game.create_monkeys(1000000)
-t2 = time.time()
-print(t2 - t1)
-print('')
+# Test
 
-print('Vectorized creation:')
+t1 = time.time()
+sim.create_monkeys(nmonkeys)
+t2 = time.time()
+print('Standard: {0:.0f} μs ({1:.2f} μs per monkey)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / nmonkeys
+))
+
 t1 = time.time()
 MonkeyArray(
     npredators=2,
     nsignals=3,
     nstates=3,
-    nmonkeys=1000000)
+    nmonkeys=nmonkeys)
 t2 = time.time()
-print(t2 - t1)
-print('')
+print('Vectorized: {0:.0f} μs ({1:.2f} μs per monkey)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / nmonkeys
+))

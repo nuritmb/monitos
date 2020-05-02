@@ -1,56 +1,35 @@
 import time
+import numpy as np
 
 from abstractlevel.models import Predator, PredArray, MonkeyState
 
-print('Speed Test: Normal')
-t1 = time.time()
-for _ in range(1000):
-    st1 = MonkeyState(1)
-    st2 = MonkeyState(2)
-    st3 = MonkeyState(3)
-    pr1 = Predator({
-        st1: 0.99,
-        st2: 0.2,
-        st3: 0.3},
-        id=1)
-    pr2 = Predator({
-        st1: 0.99,
-        st2: 0.2,
-        st3: 0.3},
-        id=2)
-    pr3 = Predator({
-        st1: 0.8,
-        st2: 0.7,
-        st3: 0.99},
-        id=3)
-    pr4 = Predator({
-        st1: 0.2,
-        st2: 0.80,
-        st3: 0.3},
-        id=4)
-    state_list = [
-        st1,
-        st2,
-        st3]
-    predator_list = [
-        pr1,
-        pr2,
-        pr3,
-        pr4]
-t2 = time.time()
-print('1000 Laps Time (s): ', t2 - t1)
-print('')
+# Parameters
+npredators = 1000
+nstates = 7
 
-print('Speed Test: Vectorized')
+# Initialization
+monkey_states = []
+for i in range(nstates):
+    monkey_states.append(MonkeyState(i))
+
+predator_matrix = np.random.rand(npredators, nstates)
+
 t1 = time.time()
-for _ in range(1000):
-    pa = PredArray(
-        [
-            [0.9900, 0.2000, 0.3000],
-            [0.9900, 0.2000, 0.3000],
-            [0.8000, 0.7000, 0.9900],
-            [0.2000, 0.8000, 0.3000],
-        ])
+predator_list = []
+for i, row in enumerate(predator_matrix):
+    predator_list.append(Predator(
+        menu={monkey_states[j]: row[j] for j in range(len(monkey_states))}
+    ))
 t2 = time.time()
-print('1000 Laps Time (s): ', t2 - t1)
-print('')
+print('Standard: {0:.0f} μs ({1:.2f} μs per predator)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / npredators
+))
+
+t1 = time.time()
+pa = PredArray(predator_matrix)
+t2 = time.time()
+print('Standard: {0:.0f} μs ({1:.2f} μs per predator)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / npredators
+))

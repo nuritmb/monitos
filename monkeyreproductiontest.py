@@ -8,7 +8,7 @@ from abstractlevel.simulation import Simulation
 npredators = 3
 nsignals = 5
 nstates = 7
-nmonkeys = 100000
+nmonkeys = 1000000
 
 # Simulation
 
@@ -50,11 +50,17 @@ sim.archives.append({})
 t1 = time.time()
 sim.replication_phase()
 t2 = time.time()
-print('Standard: {0:.0f} ms'.format((t2 - t1) * 1000000))
+print('Standard: {0:.0f} μs ({1:.2f} μs per monkey)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / nmonkeys
+))
 
 t1 = time.time()
 ma.reproduce(
     rep_rate=1.2,
     mut_rate=0.2)
 t2 = time.time()
-print('Vectorized: {0:.0f} ms'.format((t2 - t1) * 1000000))
+print('Vectorized: {0:.0f} μs ({1:.2f} μs per monkey)'.format(
+    (t2 - t1) * (10**6),
+    (t2 - t1) * (10**6) / nmonkeys
+))

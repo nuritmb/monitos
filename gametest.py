@@ -1,15 +1,18 @@
 import time
 import numpy as np
 
-from abstractlevel.models import MonkeyArray, MonkeySignal, MonkeyState, PredArray
+from abstractlevel.models import Game, MonkeySignal, MonkeyState, PredArray
 from abstractlevel.simulation import Simulation
 
 # Parameters
+nturns = 100
 npredators = 3
 nsignals = 5
 nstates = 7
 nmonkeys = 100000
-random_predator = np.random.choice(npredators)
+min_monkeys = 100
+rep_rate = 1.2
+mut_rate = 0.2
 
 # Simulation
 
@@ -31,38 +34,38 @@ predators = predarray.to_predator_list(
 
 sim = Simulation(
     nmonkeys=nmonkeys,
-    rep_rate=1.2,
-    mut_prob=0.2,
+    rep_rate=rep_rate,
+    mut_prob=mut_rate,
     predator_dict={predators[i]: sp[i] for i in range(len(predators))},
     signal_list=monkey_signals,
-    state_list=monkey_states)
-sim.create_monkeys()
+    state_list=monkey_states,
+    min_monkeys=min_monkeys,
+    delete_only_elderly=False)
 
-# MonkeyArray
+# Game
 
-ma = MonkeyArray(
-    npredators=npredators,
+game = Game(
+    nmonkeys=nmonkeys,
     nsignals=nsignals,
     nstates=nstates,
-    nmonkeys=nmonkeys)
+    predarray=predarray,
+    rep_rate=rep_rate,
+    mut_rate=mut_rate,
+    min_monkeys=min_monkeys)
 
-# Witnessing phase simulation
-pred = sim.predator_list[random_predator]
+# Game simulation
 t1 = time.time()
-witness = sim.get_random_monkey()
-message = witness.emmit(pred)
-for monkey in sim.monkey_list:
-    monkey.receive(message)
+sim.run(100)
 t2 = time.time()
-print('Standard: {0:.0f} μs ({1:.6f} μs per monkey)'.format(
+print('Standard: {0:.0f} μs ({1:.6f} μs per monkey*turn)'.format(
     (t2 - t1) * (10**6),
-    (t2 - t1) * (10**6) / nmonkeys
+    (t2 - t1) * (10**6) / (nmonkeys * nturns)
 ))
 
 t1 = time.time()
-ma.witness(random_predator)
+game.run(100)
 t2 = time.time()
-print('Vectorized: {0:.0f} μs ({1:.6f} μs per monkey)'.format(
+print('Standard: {0:.0f} μs ({1:.6f} μs per monkey*turn)'.format(
     (t2 - t1) * (10**6),
-    (t2 - t1) * (10**6) / nmonkeys
+    (t2 - t1) * (10**6) / (nmonkeys * nturns)
 ))
