@@ -40,8 +40,20 @@ for _ in range(numgames):
     print('')
 print('-' * 30)
 
+print('WORDMAP COUNT:')
+print(longestgame.monkeyarray.wordcount)
+
 print('WORDMAP CONVENTION:')
 print(longestgame.monkeyarray.wordconvention)
 
+print('ACTIONMAP COUNT:')
+print(longestgame.monkeyarray.actioncount)
+
 print('ACTIONMAP CONVENTION:')
 print(longestgame.monkeyarray.actionconvention)
+
+print('PREDATOR CONVENTION')
+print(longestgame.monkeyarray.predatorconvention)
+
+print('OPTIMAL AGAINST')
+print(longestgame.monkeyarray.optimalagainst(longestgame.predarray))

@@ -302,6 +302,11 @@ class PredArray:
         '''Returns the number of states'''
         return self.array.shape[1]
 
+    @property
+    def survivalstates(self) -> np.ndarray:
+        '''Returns the survival states of each predator'''
+        return np.argmax(self.array, axis=1)
+
     def to_predator_list(self, state_list=None) -> List[Predator]:
         '''Converts the object to a list of Predator objects
 
@@ -541,13 +546,32 @@ class MonkeyArray:
 
     @property
     def actionconvention(self) -> np.ndarray:
-        '''Returns the word convention for each predator
+        '''Returns the action convention for each signal
 
-        The result is an array W, where W[p] is the index of the signal
-        convention for predator p
+        The result is an array A, where A[s] is the index of the state/action
+        convention for signal s.
 
         '''
         return np.argmax(self.actioncount, axis=1)
+
+    @property
+    def predatorconvention(self) -> np.ndarray:
+        '''Returns the composite convention for each predator
+
+        The result is an array P, where P[p] is A[W[p]], A is the action convention
+        and W is the word convention. This is meant to represent the most likely
+        state/action of the whole population when predator p appears.
+
+        '''
+        return self.actionconvention[self.wordconvention]
+
+    def optimalagainst(self, predarray: PredArray) -> np.ndarray:
+        '''Returns the predators against which the whole monkey population is well-equiped
+        in terms of their wordmap and actionmap conventions.
+
+        '''
+        wellequiped = (self.predatorconvention == predarray.survivalstates)
+        return np.where(wellequiped)[0]
 
     def concatenate(self, other: 'MonkeyArray') -> None:
         '''Concatenates *self* with another MonkeyArray object'''
