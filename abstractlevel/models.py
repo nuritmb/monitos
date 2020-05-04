@@ -525,6 +525,16 @@ class MonkeyArray:
         return np.sum(self.wordarray, axis=0)
 
     @property
+    def wordchances(self) -> np.ndarray:
+        '''Measures the probability of a signal for each predator
+
+        The result is a matrix W, where W[p,s] is probability
+        that signal s is emmited given that predator p appears.
+
+        '''
+        return self.wordcount/self.nummonkeys
+
+    @property
     def wordconvention(self) -> np.ndarray:
         '''Returns the word convention for each predator
 
@@ -545,6 +555,16 @@ class MonkeyArray:
         return np.sum(self.actionarray, axis=0)
 
     @property
+    def actionchances(self) -> np.ndarray:
+        '''Counts how many mappings of an action/state there are for each signal
+
+        The result is a matrix A, where A[s,a] is the proportion of monkeys
+        that associate the signal s with the action/state a.
+
+        '''
+        return self.actioncount/self.nummonkeys
+
+    @property
     def actionconvention(self) -> np.ndarray:
         '''Returns the action convention for each signal
 
@@ -555,12 +575,21 @@ class MonkeyArray:
         return np.argmax(self.actioncount, axis=1)
 
     @property
-    def predatorconvention(self) -> np.ndarray:
+    def strategychance(self) -> np.ndarray:
+        '''Returns the composite action convention probabilities for each predator
+
+        The result is an array P, where P[p, a] is the probility of state/action a
+        for a randomly selected monkey when predator p appears.
+
+        '''
+        return np.matmul(self.wordchances, self.actionchances)
+
+    @property
+    def strategyconvention(self) -> np.ndarray:
         '''Returns the composite convention for each predator
 
-        The result is an array P, where P[p] is A[W[p]], A is the action convention
-        and W is the word convention. This is meant to represent the most likely
-        state/action of the whole population when predator p appears.
+        The result is an array P, where P[p] is the most likely state/action when
+        predator p appears.
 
         '''
         return self.actionconvention[self.wordconvention]
@@ -570,7 +599,7 @@ class MonkeyArray:
         in terms of their wordmap and actionmap conventions.
 
         '''
-        wellequiped = (self.predatorconvention == predarray.survivalstates)
+        wellequiped = (self.strategyconvention == predarray.survivalstates)
         return np.where(wellequiped)[0]
 
     def concatenate(self, other: 'MonkeyArray') -> None:
