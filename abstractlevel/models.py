@@ -578,7 +578,7 @@ class MonkeyArray:
     def strategychance(self) -> np.ndarray:
         '''Returns the composite action convention probabilities for each predator
 
-        The result is an array P, where P[p, a] is the probility of state/action a
+        The result is an array WA, where WA[p, a] is the probility of state/action a
         for a randomly selected monkey when predator p appears.
 
         '''
@@ -588,11 +588,31 @@ class MonkeyArray:
     def strategyconvention(self) -> np.ndarray:
         '''Returns the composite convention for each predator
 
-        The result is an array P, where P[p] is the most likely state/action when
+        The result is an array WA, where WA[p] is the most likely state/action when
         predator p appears.
 
         '''
         return self.actionconvention[self.wordconvention]
+
+    def survivalchances(self, predarray: PredArray) -> np.ndarray:
+        '''Returns the overall survival chance for each predator
+
+        The result is an array C, where C[p] is the population's overall survival chance
+        against predator p
+
+        '''
+        return np.sum(np.multiply(predarray.array, self.strategychance), axis=1)
+
+    def overallsurvivalchance(self, predarray: PredArray) -> np.ndarray:
+        '''Returns the overall survival chance for each predator
+
+        The result is an array C, where C[p] is the population's overall survival chance
+        against predator p
+
+        '''
+        if predarray.spawn_probabilities:
+            return np.sum(np.multiply(self.survivalchances(predarray), np.array(predarray.spawn_probabilities)))
+        return np.mean(self.survivalchances(predarray))
 
     def optimalagainst(self, predarray: PredArray) -> np.ndarray:
         '''Returns the predators against which the whole monkey population is well-equiped

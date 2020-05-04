@@ -77,6 +77,14 @@ print('OVERALL STRATEGY CONVENTION')
 print(longestgame.monkeyarray.strategyconvention)
 print('')
 
+print('SURVIVAL CHANCE BY PREDATOR')
+print(longestgame.monkeyarray.survivalchances(longestgame.predarray))
+print('')
+
+print('OVERALL SURVIVAL CHANCE')
+print(longestgame.monkeyarray.overallsurvivalchance(longestgame.predarray))
+print('')
+
 print('OPTIMAL AGAINST')
 print(longestgame.monkeyarray.optimalagainst(longestgame.predarray))
 print('')
