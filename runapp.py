@@ -4,17 +4,17 @@ import pandas as pd
 from abstractlevel.models import Game, PredArray
 
 # Parameters
-numgames = 5
+numgames = 100
 maxturns = 1000
-nmonkeys = 1000000
-nsignals = 3
+nmonkeys = 100000
+nsignals = 20
 nstates = 3
 minmonkeys = 100
 
 predarray = PredArray([
-    #state1 #state2 #state3
-    [0.5,   0.99,   0.6],   # snake
-    [0.6,   0.5,    0.99]   # eagle
+    #grass  #tree   #bush
+    [0.7,   0.99,   0.6],   # snake
+    [0.7,   0.6,    0.99]   # eagle
 ])
 
 game = Game(
@@ -30,17 +30,16 @@ print('RUNNING GAMES')
 print('-' * 30)
 mostturns = 0
 longestgame = None
-for _ in range(numgames):
+for i in range(numgames):
     game.reset()
     game.run(maxturns)
     if game.turns > mostturns:
         longestgame = copy.deepcopy(game)
         mostturns = game.turns
-        print('RECORD HIGH! (%d turns)' % mostturns)
+        print('RECORD HIGH! (%d turns in game %s)' % (mostturns, i+1))
     if game.turns == maxturns:
         print('MADE IT!')
         break
-    print('')
 print('-' * 30)
 print('LONGEST GAME')
 print('-' * 30)

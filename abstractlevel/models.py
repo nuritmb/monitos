@@ -606,8 +606,8 @@ class MonkeyArray:
     def overallsurvivalchance(self, predarray: PredArray) -> np.ndarray:
         '''Returns the overall survival chance for each predator
 
-        The result is an array C, where C[p] is the population's overall survival chance
-        against predator p
+        The result is a number C, where C is the population's overall survival chance
+        against all predators.
 
         '''
         if predarray.spawn_probabilities:
@@ -798,13 +798,14 @@ class Game:
             durpt=1000 * duration / self.turns)
         print(message)
 
-    def run(self, nturns: int) -> None:
+    def run(self, nturns: int, print_ending=False) -> None:
         '''Runs the game which forcefully ends after *nturns* turns or when less than min_monkeys remain
 
         :param nturns: maximum number of turns until forceful termination of the game
 
         '''
-        print('Game started.')
+        if print_ending:
+            print('Game started.')
         t1 = time.time()
         for i in range(nturns):
             # Increment turns
@@ -825,10 +826,11 @@ class Game:
                 self.mut_rate,
                 max_monkeys=self.nmonkeys)
         # Print ending message
-        duration = time.time() - t1
-        self.ending_message(
-            nturns=nturns,
-            duration=duration)
+        if print_ending:
+            duration = time.time() - t1
+            self.ending_message(
+                nturns=nturns,
+                duration=duration)
 
     def reset(self):
         self.monkeyarray = MonkeyArray(
