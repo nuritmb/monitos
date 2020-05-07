@@ -532,7 +532,7 @@ class MonkeyArray:
         that signal s is emmited given that predator p appears.
 
         '''
-        return self.wordcount/self.nummonkeys
+        return self.wordcount / self.nummonkeys
 
     @property
     def wordconvention(self) -> np.ndarray:
@@ -562,7 +562,7 @@ class MonkeyArray:
         that associate the signal s with the action/state a.
 
         '''
-        return self.actioncount/self.nummonkeys
+        return self.actioncount / self.nummonkeys
 
     @property
     def actionconvention(self) -> np.ndarray:
@@ -595,23 +595,31 @@ class MonkeyArray:
         return self.actionconvention[self.wordconvention]
 
     def survivalchances(self, predarray: PredArray) -> np.ndarray:
-        '''Returns the overall survival chance for each predator
+        '''Returns the survival chance for each predator
 
         The result is an array C, where C[p] is the population's overall survival chance
         against predator p
 
         '''
-        return np.sum(np.multiply(predarray.array, self.strategychance), axis=1)
+        return np.sum(
+            np.multiply(
+                predarray.array,
+                self.strategychance),
+            axis=1)
 
     def overallsurvivalchance(self, predarray: PredArray) -> np.ndarray:
-        '''Returns the overall survival chance for each predator
+        '''Returns the overall survival chance
 
         The result is a number C, where C is the population's overall survival chance
-        against all predators.
+        against all predators, taking into account the predator's spawn probabilities
 
         '''
         if predarray.spawn_probabilities:
-            return np.sum(np.multiply(self.survivalchances(predarray), np.array(predarray.spawn_probabilities)))
+            return np.sum(
+                np.multiply(
+                    self.survivalchances(predarray),
+                    np.array(
+                        predarray.spawn_probabilities)))
         return np.mean(self.survivalchances(predarray))
 
     def optimalagainst(self, predarray: PredArray) -> np.ndarray:
@@ -621,6 +629,13 @@ class MonkeyArray:
         '''
         wellequiped = (self.strategyconvention == predarray.survivalstates)
         return np.where(wellequiped)[0]
+
+    def learned(self, predarray: PredArray) -> np.array:
+        '''Returns True if the monkey's convention for each predator is the
+        same as the predator's optimal response.
+
+        '''
+        return np.all(self.strategyconvention == predarray.survivalstates)
 
     def concatenate(self, other: 'MonkeyArray') -> None:
         '''Concatenates *self* with another MonkeyArray object'''
@@ -780,25 +795,112 @@ class Game:
             nsignals=self.nsignals,
             nstates=self.nstates,
             nmonkeys=self.nmonkeys)
+        # Misc. measures
+        self.bottleneck = nmonkeys # Minimum number of monkeys that ever existed
+        self.bottleneckturn = 0 # Turn in which the bottleneck ocurred
+        self.worstoverallturnmultiplier = np.inf # Worst .overallturnmultiplier in the whole game
+        self.bestoverallturnmultiplier = 0.0 # Best .overallturnmultiplier in the whole game
         # Measure turns
         self.turns = 0
+        self.monkeyswon = None
+        self.ended = False
+
+    # PredArray properties
+
+    @property
+    def survivalstates(self) -> np.ndarray:
+        return self.predarray.survivalstates
+
+    # MonkeyArray properties
+
+    @property
+    def wordcount(self) -> np.ndarray:
+        return self.monkeyarray.wordcount
+
+    @property
+    def wordchances(self) -> np.ndarray:
+        return self.monkeyarray.wordchances
+
+    @property
+    def wordconvention(self) -> np.ndarray:
+        return self.monkeyarray.wordconvention
+
+    @property
+    def actioncount(self) -> np.ndarray:
+        return self.monkeyarray.actioncount
+
+    @property
+    def actionchances(self) -> np.ndarray:
+        return self.monkeyarray.actionchances
+
+    @property
+    def actionconvention(self) -> np.ndarray:
+        return self.monkeyarray.actionconvention
+
+    @property
+    def strategychance(self) -> np.ndarray:
+        return self.monkeyarray.strategychance
+
+    @property
+    def strategyconvention(self) -> np.ndarray:
+        return self.monkeyarray.strategyconvention
+
+    @property
+    def survivalchances(self) -> np.ndarray:
+        return self.monkeyarray.survivalchances(self.predarray)
+
+    @property
+    def overallsurvivalchance(self) -> np.ndarray:
+        return self.monkeyarray.overallsurvivalchance(self.predarray)
+
+    @property
+    def optimalagainst(self) -> np.ndarray:
+        return self.monkeyarray.optimalagainst(self.predarray)
+
+    @property
+    def learned(self) -> bool:
+        return self.monkeyarray.learned(self.predarray)
+
+    # Overall game properties
+
+    @property
+    def turnmultiplier(self) -> np.ndarray:
+        '''Returns the expected ratio of the population in the next turn
+        relative to the current one, for each predator
+
+        '''
+        return self.survivalchances * self.rep_rate
+
+    @property
+    def overallturnmultiplier(self) -> float:
+        '''Returns the overall expected ratio of the population in the next
+        turn relative to the current one, taking into account each predator's
+        spawn probabilities
+
+        '''
+        return self.overallsurvivalchance * self.rep_rate
 
     def ending_message(
             self,
             nturns: int,
-            duration: float) -> None:
-        if self.turns >= nturns:
-            message = 'All turns {nturns:d} have passed. Game ended with {nmonk:d} monkeys.'.format(
-                nturns=nturns, nmonk=self.monkeyarray.nummonkeys)
-        else:
-            message = 'There are less than {nmonk:d} monkeys. Game ended in {nturns:d} turns.'.format(
-                nmonk=self.min_monkeys, nturns=self.turns)
-        message += ' Duration: {dur:.4f} ({durpt:.0f} ms per turn)'.format(
+            duration: float,
+            sep: str = '',
+            end: str = '\n') -> None:
+        gamestate = 'won' if self.turns >= nturns else 'lost in {0} turns'.format(
+            self.turns)
+        message = 'Game {0}. Last turn had a multiplier of {1:.4f} and {2} monkeys.'.format(
+            gamestate, self.overallturnmultiplier, self.monkeyarray.nummonkeys)
+        message += '({dur:.4f} s, {durpt:.0f} ms per turn)'.format(
             dur=duration,
             durpt=1000 * duration / self.turns)
-        print(message)
+        print(message, sep=sep, end=end)
 
-    def run(self, nturns: int, print_ending=False) -> None:
+    def run(
+            self,
+            nturns: int,
+            print_ending: bool = False,
+            sep: str = '',
+            end: str = '\n') -> None:
         '''Runs the game which forcefully ends after *nturns* turns or when less than min_monkeys remain
 
         :param nturns: maximum number of turns until forceful termination of the game
@@ -808,6 +910,15 @@ class Game:
             print('Game started.')
         t1 = time.time()
         for i in range(nturns):
+            # Measure stuff
+            if self.bottleneck > self.monkeyarray.nummonkeys:
+                self.bottleneck = self.monkeyarray.nummonkeys
+                self.bottleneckturn = self.turns
+            otm = self.overallturnmultiplier
+            if self.worstoverallturnmultiplier > otm:
+                self.worstoverallturnmultiplier = otm
+            if self.bestoverallturnmultiplier < otm:
+                self.bestoverallturnmultiplier = otm
             # Increment turns
             self.turns += 1
             # Spawn predator
@@ -825,17 +936,55 @@ class Game:
                 self.rep_rate,
                 self.mut_rate,
                 max_monkeys=self.nmonkeys)
+        self.ended = True
+        self.monkeyswon = (self.turns >= nturns)
         # Print ending message
         if print_ending:
             duration = time.time() - t1
             self.ending_message(
                 nturns=nturns,
-                duration=duration)
+                duration=duration,
+                sep=sep,
+                end=end)
 
-    def reset(self):
+    def reset(self) -> None:
         self.monkeyarray = MonkeyArray(
             npredators=self.predarray.numpredators,
             nsignals=self.nsignals,
             nstates=self.nstates,
             nmonkeys=self.nmonkeys)
+        self.bottleneck = self.nmonkeys # Minimum number of monkeys that ever existed
+        self.bottleneckturn = 0 # Turn in which the bottleneck ocurred
+        self.worstoverallturnmultiplier = np.inf # Worst .overallturnmultiplier in the whole game
+        self.bestoverallturnmultiplier = 0.0 # Best .overallturnmultiplier in the whole game
+        # Measure turns
         self.turns = 0
+        self.monkeyswon = None
+        self.ended = False
+
+    def better(self, other: 'Game') -> bool:
+        '''Compares two games after their runs ended.
+
+        '''
+        # Validate types
+        if type(self) != type(other):
+            raise ValueError('both entities must be of type Game.')
+        # Validate ending
+        if not (self.ended and other.ended):
+            raise ValueError(
+                'games must have ended for this comparison to be made.')
+        # Compare games by turns
+        if self.turns > other.turns:
+            return True
+        elif self.turns < other.turns:
+            return False
+        # Compare games by the remaining number of monkeys
+        if self.monkeyarray.nummonkeys > other.monkeyarray.nummonkeys:
+            return True
+        elif self.monkeyarray.nummonkeys > other.monkeyarray.nummonkeys:
+            return False
+        # Compare games by their overall multiplier at the last turn
+        if self.overallturnmultiplier > other.overallturnmultiplier:
+            return True
+        elif self.overallturnmultiplier > other.overallturnmultiplier:
+            return False

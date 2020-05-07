@@ -1,5 +1,6 @@
 import copy
 import pandas as pd
+import numpy as np
 
 from abstractlevel.models import Game, PredArray
 
@@ -7,7 +8,7 @@ from abstractlevel.models import Game, PredArray
 numgames = 100
 maxturns = 1000
 nmonkeys = 100000
-nsignals = 20
+nsignals = 7
 nstates = 3
 minmonkeys = 100
 
@@ -28,62 +29,80 @@ game = Game(
 
 print('RUNNING GAMES')
 print('-' * 30)
-mostturns = 0
-longestgame = None
+bestgame = None
 for i in range(numgames):
     game.reset()
+    print('GAME %d' % (i+1), end=': ')
     game.run(maxturns)
-    if game.turns > mostturns:
-        longestgame = copy.deepcopy(game)
-        mostturns = game.turns
-        print('RECORD HIGH! (%d turns in game %s)' % (mostturns, i+1))
-    if game.turns == maxturns:
-        print('MADE IT!')
-        break
+    bestgame = copy.deepcopy(game) if not bestgame else bestgame
+    bestgame.numgame = i+1
+    if game.monkeyswon:
+        print('MADE IT WITH %d MONKEYS! (bottleneck: %d monkeys in turn %d, bestmultiplier: %.4f, worstmultiplier: %.4f)' % (
+            game.monkeyarray.nummonkeys,
+            game.bottleneck,
+            game.bottleneckturn,
+            game.bestoverallturnmultiplier,
+            game.worstoverallturnmultiplier))
+    elif game.turns > bestgame.turns:
+        print('RECORD HIGH OF %d TURNS! (bestmultiplier: %.4f, worstmultiplier: %.4f)' % (
+            game.turns,
+            game.bestoverallturnmultiplier,
+            game.worstoverallturnmultiplier))
+    else:
+        print('%d TURNS. (bestmultiplier: %.4f, worstmultiplier: %.4f)' %(
+            game.turns,
+            game.bestoverallturnmultiplier,
+            game.worstoverallturnmultiplier))
+    if game.better(bestgame):
+        bestgame = copy.deepcopy(game)
+        bestgame.numgame = i+1
+
+np.set_printoptions(precision=2, suppress=True)
+
 print('-' * 30)
-print('LONGEST GAME')
+print('BEST GAME: GAME {0}'.format(bestgame.numgame))
 print('-' * 30)
 
 print('WORDMAP COUNT:')
-print(longestgame.monkeyarray.wordcount)
+print(bestgame.wordcount)
 print('')
 
 print('WORDMAP PROBABILITIES:')
-print(longestgame.monkeyarray.wordchances)
+print(bestgame.wordchances)
 print('')
 
 print('WORDMAP CONVENTION:')
-print(longestgame.monkeyarray.wordconvention)
+print(bestgame.wordconvention)
 print('')
 
 print('ACTIONMAP COUNT:')
-print(longestgame.monkeyarray.actioncount)
+print(bestgame.actioncount)
 print('')
 
 print('ACTIONMAP PROBABILITIES:')
-print(longestgame.monkeyarray.actionchances)
+print(bestgame.actionchances)
 print('')
 
 print('ACTIONMAP CONVENTION:')
-print(longestgame.monkeyarray.actionconvention)
+print(bestgame.actionconvention)
 print('')
 
 print('OVERALL STRATEGY PROBABILITIES:')
-print(longestgame.monkeyarray.strategychance)
+print(bestgame.strategychance)
 print('')
 
 print('OVERALL STRATEGY CONVENTION')
-print(longestgame.monkeyarray.strategyconvention)
+print(bestgame.strategyconvention)
 print('')
 
 print('SURVIVAL CHANCE BY PREDATOR')
-print(longestgame.monkeyarray.survivalchances(longestgame.predarray))
+print(bestgame.survivalchances)
 print('')
 
 print('OVERALL SURVIVAL CHANCE')
-print(longestgame.monkeyarray.overallsurvivalchance(longestgame.predarray))
+print(bestgame.overallsurvivalchance)
 print('')
 
 print('OPTIMAL AGAINST')
-print(longestgame.monkeyarray.optimalagainst(longestgame.predarray))
+print(bestgame.optimalagainst)
 print('')
