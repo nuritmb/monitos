@@ -56,7 +56,7 @@ game = Simulation(
         pr2: 0.5},
     signal_list=signal_list,
     state_list=state_list,
-    archive_cicle=1,
+    archive_cycle=1,
     min_monkeys=100,
     archive_maps=False)
 

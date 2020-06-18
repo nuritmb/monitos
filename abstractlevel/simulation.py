@@ -20,7 +20,7 @@ class Simulation:
     :param signal_list: list of signals that a monkey can use
     :param state_list: list of states in which a monkey can be
     :param delete_only_elderly: if True, it will delete the oldest monkeys when adjusting for overpopulation
-    :param archive_cicle: integer representing how many turns until the state of the game is archived
+    :param archive_cycle: integer representing how many turns until the state of the game is archived
     :param min_monkeys: minimum number of monkeys for the game to continue
     :param archive_maps: if True, monkey maps are archived along with the gamestate
 
@@ -35,7 +35,7 @@ class Simulation:
                  signal_list: List[MonkeySignal],
                  state_list: List[MonkeyState],
                  delete_only_elderly: bool = True,
-                 archive_cicle: int = 100,
+                 archive_cycle: int = 100,
                  min_monkeys: int = 1,
                  archive_maps: bool = False) -> None:
         # Received parameters
@@ -46,7 +46,7 @@ class Simulation:
         self.signal_list = signal_list
         self.state_list = state_list
         self.delete_only_elderly = delete_only_elderly
-        self.archive_cicle = archive_cicle
+        self.archive_cycle = archive_cycle
         self.min_monkeys = min_monkeys
         self.archive_maps = archive_maps
         # Calculated parameters
@@ -315,7 +315,7 @@ class Simulation:
         else:
             excess = None
         t2 = time.time()
-        if (self.turn % self.archive_cicle) == 0:
+        if (self.turn % self.archive_cycle) == 0:
             self.archives[-1]['Replication Stats (No Mutation)'] = len(
                 monkey_list__no_mutation)
             self.archives[-1]['Replication Stats (Mutation)'] = number__mutation
@@ -356,7 +356,7 @@ class Simulation:
         self.monkey_list = new_monkey_list
         t2 = time.time()
         # Archiving Phase
-        if (self.turn % self.archive_cicle) == 0:
+        if (self.turn % self.archive_cycle) == 0:
             self.archives[-1]['Message'] = message
             self.archives[-1]['Predator'] = pred
             self.archives[-1]['Average Survival Chance'] = 0
@@ -390,13 +390,13 @@ class Simulation:
     def run_turn(self) -> None:
         '''Runs a turn which consists in the predator and the replication phase'''
         t0 = time.time()
-        if (self.turn % self.archive_cicle) == 0:
+        if (self.turn % self.archive_cycle) == 0:
             self.archives.append({})
         self.predator_phase()
         t1 = time.time()
         self.replication_phase()
         t2 = time.time()
-        if (self.turn % self.archive_cicle) == 0:
+        if (self.turn % self.archive_cycle) == 0:
             self.archives[-1]['Turn'] = self.turn
             self.archives[-1]['Predator Phase Time'] = t1 - t0
             self.archives[-1]['Replication Phase Time'] = t2 - t1

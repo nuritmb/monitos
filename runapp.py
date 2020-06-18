@@ -5,12 +5,13 @@ import numpy as np
 from abstractlevel.models import Game, PredArray
 
 # Parameters
-numgames = 100
-maxturns = 1000
-nmonkeys = 100000
+numgames = 1
+maxturns = 1000000
+nmonkeys = 1000
 nsignals = 7
 nstates = 3
-minmonkeys = 100
+minmonkeys = 30
+immortal = True
 
 predarray = PredArray([
     #grass  #tree   #bush
@@ -25,7 +26,9 @@ game = Game(
     predarray=predarray,
     rep_rate=1.2,
     mut_rate=0.05,
-    min_monkeys=minmonkeys)
+    min_monkeys=minmonkeys,
+    immortal=immortal,
+    archive_cycle=10000)
 
 print('RUNNING GAMES')
 print('-' * 30)
