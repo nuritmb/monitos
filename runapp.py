@@ -15,7 +15,8 @@ minmonkeys = 100
 predarray = PredArray([
     #grass  #tree   #bush
     [0.7,   0.99,   0.6],   # snake
-    [0.7,   0.6,    0.99]   # eagle
+    [0.6,   0.7,    0.99],  # eagle
+    [0.99,   0.6,    0.7]   # puma
 ])
 
 game = Game(
