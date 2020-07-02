@@ -1,0 +1,143 @@
+RUNNING GAMES
+------------------------------
+In game 1, which lasted 84 turns, monkeys had a 0.940279296875 rep * overall surv rate
+In game 2, which lasted 185 turns, monkeys had a 0.969835121828052 rep * overall surv rate
+In game 3, which lasted 74 turns, monkeys had a 0.9253117192147531 rep * overall surv rate
+In game 4, which lasted 83 turns, monkeys had a 0.9698061271147689 rep * overall surv rate
+In game 5, which lasted 72 turns, monkeys had a 0.9337411979881114 rep * overall surv rate
+In game 6, which lasted 82 turns, monkeys had a 0.9958837037037035 rep * overall surv rate
+In game 7, which lasted 82 turns, monkeys had a 0.9380949333333332 rep * overall surv rate
+In game 8, which lasted 131 turns, monkeys had a 0.94466015625 rep * overall surv rate
+In game 9, which lasted 88 turns, monkeys had a 0.9488302688914868 rep * overall surv rate
+In game 10, which lasted 89 turns, monkeys had a 0.9831140740740739 rep * overall surv rate
+In game 11, which lasted 1000 turns, monkeys had a 1.1539688515844218 rep * overall surv rate
+MADE IT 1 TIMES! (11th game)
+
+OVERALL STRATEGY CONVENTION
+[1 2]
+
+SURVIVAL CHANCE BY PREDATOR
+[0.95349987 0.96978155]
+
+OVERALL SURVIVAL CHANCE
+0.9616407096536849
+
+------------------------------
+In game 12, which lasted 98 turns, monkeys had a 0.9504040574809806 rep * overall surv rate
+In game 13, which lasted 72 turns, monkeys had a 0.931571111111111 rep * overall surv rate
+In game 14, which lasted 76 turns, monkeys had a 0.9597769679300291 rep * overall surv rate
+In game 15, which lasted 82 turns, monkeys had a 0.9483598913535535 rep * overall surv rate
+In game 16, which lasted 81 turns, monkeys had a 0.9475208333333334 rep * overall surv rate
+In game 17, which lasted 87 turns, monkeys had a 0.9476321614583334 rep * overall surv rate
+In game 18, which lasted 302 turns, monkeys had a 0.9972192592592591 rep * overall surv rate
+In game 19, which lasted 85 turns, monkeys had a 0.950435937688685 rep * overall surv rate
+In game 20, which lasted 79 turns, monkeys had a 0.9565495914116328 rep * overall surv rate
+In game 21, which lasted 99 turns, monkeys had a 0.9275746874999998 rep * overall surv rate
+In game 22, which lasted 109 turns, monkeys had a 0.9623062603878115 rep * overall surv rate
+In game 23, which lasted 91 turns, monkeys had a 0.9478224271267102 rep * overall surv rate
+In game 24, which lasted 86 turns, monkeys had a 0.9455305570578691 rep * overall surv rate
+In game 25, which lasted 84 turns, monkeys had a 0.957755978318631 rep * overall surv rate
+In game 26, which lasted 99 turns, monkeys had a 0.9521308821049079 rep * overall surv rate
+In game 27, which lasted 82 turns, monkeys had a 0.9385902668759812 rep * overall surv rate
+In game 28, which lasted 95 turns, monkeys had a 0.9542305289462722 rep * overall surv rate
+In game 29, which lasted 101 turns, monkeys had a 0.9590612244897959 rep * overall surv rate
+In game 30, which lasted 95 turns, monkeys had a 0.9554228489024195 rep * overall surv rate
+In game 31, which lasted 102 turns, monkeys had a 0.9517598460842009 rep * overall surv rate
+In game 32, which lasted 178 turns, monkeys had a 0.9404099895941727 rep * overall surv rate
+In game 33, which lasted 86 turns, monkeys had a 0.9349453125 rep * overall surv rate
+In game 34, which lasted 138 turns, monkeys had a 0.9433674074074074 rep * overall surv rate
+In game 35, which lasted 80 turns, monkeys had a 0.9844471874999999 rep * overall surv rate
+In game 36, which lasted 81 turns, monkeys had a 0.9333159740673822 rep * overall surv rate
+In game 37, which lasted 85 turns, monkeys had a 0.9301070154577883 rep * overall surv rate
+In game 38, which lasted 86 turns, monkeys had a 0.9196962962962962 rep * overall surv rate
+In game 39, which lasted 120 turns, monkeys had a 0.9651796982167351 rep * overall surv rate
+In game 40, which lasted 106 turns, monkeys had a 0.9408029987505205 rep * overall surv rate
+In game 41, which lasted 85 turns, monkeys had a 0.9586239446366782 rep * overall surv rate
+In game 42, which lasted 84 turns, monkeys had a 0.957310138504155 rep * overall surv rate
+In game 43, which lasted 85 turns, monkeys had a 0.9695840443213297 rep * overall surv rate
+In game 44, which lasted 83 turns, monkeys had a 0.9431164098292377 rep * overall surv rate
+In game 45, which lasted 115 turns, monkeys had a 0.9552528721121069 rep * overall surv rate
+In game 46, which lasted 110 turns, monkeys had a 0.958951062057476 rep * overall surv rate
+In game 47, which lasted 78 turns, monkeys had a 0.962088967009194 rep * overall surv rate
+In game 48, which lasted 1000 turns, monkeys had a 1.1304499018146 rep * overall surv rate
+MADE IT 2 TIMES! (48th game)
+
+OVERALL STRATEGY CONVENTION
+[1 2]
+
+SURVIVAL CHANCE BY PREDATOR
+[0.97538131 0.90870186]
+
+OVERALL SURVIVAL CHANCE
+0.9420415848454999
+
+------------------------------
+In game 49, which lasted 339 turns, monkeys had a 0.9626081665765278 rep * overall surv rate
+In game 50, which lasted 81 turns, monkeys had a 1.0028143078512397 rep * overall surv rate
+In game 51, which lasted 95 turns, monkeys had a 0.9672265624999999 rep * overall surv rate
+In game 52, which lasted 977 turns, monkeys had a 0.9683619869125519 rep * overall surv rate
+In game 53, which lasted 84 turns, monkeys had a 0.9557498958767179 rep * overall surv rate
+In game 54, which lasted 93 turns, monkeys had a 0.9021675170068026 rep * overall surv rate
+In game 55, which lasted 75 turns, monkeys had a 0.9304610020661156 rep * overall surv rate
+In game 56, which lasted 83 turns, monkeys had a 0.9477319214876032 rep * overall surv rate
+In game 57, which lasted 77 turns, monkeys had a 0.967574074074074 rep * overall surv rate
+In game 58, which lasted 78 turns, monkeys had a 0.9419806301652893 rep * overall surv rate
+In game 59, which lasted 76 turns, monkeys had a 0.9423849307479223 rep * overall surv rate
+In game 60, which lasted 74 turns, monkeys had a 0.9430986570247933 rep * overall surv rate
+In game 61, which lasted 82 turns, monkeys had a 0.9368598771266541 rep * overall surv rate
+In game 62, which lasted 91 turns, monkeys had a 0.9462083333333332 rep * overall surv rate
+In game 63, which lasted 76 turns, monkeys had a 0.9484484429065744 rep * overall surv rate
+In game 64, which lasted 85 turns, monkeys had a 0.9425699999999999 rep * overall surv rate
+In game 65, which lasted 84 turns, monkeys had a 0.9630723393510919 rep * overall surv rate
+In game 66, which lasted 1000 turns, monkeys had a 1.115664815532926 rep * overall surv rate
+MADE IT 3 TIMES! (66th game)
+
+OVERALL STRATEGY CONVENTION
+[1 2]
+
+SURVIVAL CHANCE BY PREDATOR
+[0.93322163 0.92621973]
+
+OVERALL SURVIVAL CHANCE
+0.9297206796107718
+
+------------------------------
+In game 67, which lasted 84 turns, monkeys had a 0.9302071017655227 rep * overall surv rate
+In game 68, which lasted 73 turns, monkeys had a 0.9311287559878065 rep * overall surv rate
+In game 69, which lasted 74 turns, monkeys had a 0.9393323615160348 rep * overall surv rate
+In game 70, which lasted 89 turns, monkeys had a 0.9396003826123923 rep * overall surv rate
+In game 71, which lasted 82 turns, monkeys had a 0.9570031236984589 rep * overall surv rate
+In game 72, which lasted 101 turns, monkeys had a 0.9689245541838134 rep * overall surv rate
+In game 73, which lasted 98 turns, monkeys had a 0.9293915624999999 rep * overall surv rate
+In game 74, which lasted 75 turns, monkeys had a 0.9445508151231355 rep * overall surv rate
+In game 75, which lasted 80 turns, monkeys had a 0.9118899739583333 rep * overall surv rate
+In game 76, which lasted 281 turns, monkeys had a 0.9793210896847261 rep * overall surv rate
+In game 77, which lasted 104 turns, monkeys had a 0.9348942671714439 rep * overall surv rate
+In game 78, which lasted 89 turns, monkeys had a 0.946937037037037 rep * overall surv rate
+In game 79, which lasted 76 turns, monkeys had a 0.943916675900277 rep * overall surv rate
+In game 80, which lasted 87 turns, monkeys had a 0.9596100260416667 rep * overall surv rate
+In game 81, which lasted 119 turns, monkeys had a 0.9640281440443212 rep * overall surv rate
+In game 82, which lasted 115 turns, monkeys had a 0.9448661438615467 rep * overall surv rate
+In game 83, which lasted 80 turns, monkeys had a 0.9437709370755998 rep * overall surv rate
+In game 84, which lasted 95 turns, monkeys had a 0.9590185339441899 rep * overall surv rate
+In game 85, which lasted 95 turns, monkeys had a 0.9589671026555686 rep * overall surv rate
+In game 86, which lasted 91 turns, monkeys had a 0.9341054309703474 rep * overall surv rate
+In game 87, which lasted 167 turns, monkeys had a 1.0087329705385624 rep * overall surv rate
+In game 88, which lasted 91 turns, monkeys had a 0.9483610537190083 rep * overall surv rate
+In game 89, which lasted 98 turns, monkeys had a 0.9381947105372762 rep * overall surv rate
+In game 90, which lasted 108 turns, monkeys had a 0.9676042967048919 rep * overall surv rate
+In game 91, which lasted 94 turns, monkeys had a 0.9413522521434607 rep * overall surv rate
+In game 92, which lasted 99 turns, monkeys had a 0.9227973407202215 rep * overall surv rate
+In game 93, which lasted 72 turns, monkeys had a 0.9358022211720226 rep * overall surv rate
+In game 94, which lasted 109 turns, monkeys had a 0.9646293872694824 rep * overall surv rate
+In game 95, which lasted 116 turns, monkeys had a 0.954142204272505 rep * overall surv rate
+In game 96, which lasted 88 turns, monkeys had a 0.9615206611570247 rep * overall surv rate
+In game 97, which lasted 87 turns, monkeys had a 0.9238058003525075 rep * overall surv rate
+In game 98, which lasted 71 turns, monkeys had a 0.9301772770751406 rep * overall surv rate
+In game 99, which lasted 83 turns, monkeys had a 0.9828331351565598 rep * overall surv rate
+In game 100, which lasted 93 turns, monkeys had a 0.9736694654054628 rep * overall surv rate
+
+With 5 signals,
+ monkeys made it 3.0% of the time and
+ had an average overall survival chance average of 0.9444676580366522
+ which means the rep rate times the surv rate is 1.1333611896439826.
