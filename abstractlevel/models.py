@@ -719,8 +719,10 @@ class MonkeyArray:
         signal = np.argmax(self.wordarray[monkey, pred, :])
         return self.actionarray[:, signal, :]
 
-    def survive(self, surviving_list: list) -> None:
+    def survive(self, surviving_list: list, immortal: bool = False) -> None:
         '''Eliminates monkeys who did not survive a predator attack'''
+        if (len(surviving_list) == 0) and immortal:
+            return
         self.wordarray = self.wordarray[surviving_list]
         self.actionarray = self.actionarray[surviving_list]
 
@@ -760,9 +762,10 @@ class Game:
     :param rep_rate: rate of reprodiction
     :param mut_rate: chance of random mutation in a generated monkey
     :param min_monkeys: minimum number of monkeys for the game to continue
-    :param archive_cicle: integer representing how many turns until the state of the game is archived
+    :param archive_cycle: integer representing how many turns until the state of the game is archived
     :param delete_only_elderly: if True, it will delete the oldest monkeys when adjusting for overpopulation
     :param archive_maps: if True, monkey maps are archived along with the gamestate
+    :param immortal: if True, monkeys are allowed to reproduce to max population after hitting minmonkeys
 
     '''
 
@@ -775,9 +778,10 @@ class Game:
             rep_rate: float,
             mut_rate: float,
             min_monkeys: int = 1,
-            archive_cicle: int = 100,
+            archive_cycle: int = 100,
             delete_only_elderly: bool = False,
-            archive_maps: bool = False):
+            archive_maps: bool = False,
+            immortal: bool = False):
         # Received parameters
         self.nmonkeys = nmonkeys
         self.nsignals = nsignals
@@ -786,9 +790,10 @@ class Game:
         self.rep_rate = rep_rate
         self.mut_rate = mut_rate
         self.min_monkeys = min_monkeys
-        self.archive_cicle = archive_cicle
+        self.archive_cycle = archive_cycle
         self.delete_only_elderly = delete_only_elderly
         self.archive_maps = archive_maps
+        self.immortal = immortal
         # Calculated parameters
         self.monkeyarray = MonkeyArray(
             npredators=self.predarray.numpredators,
@@ -910,27 +915,38 @@ class Game:
             print('Game started.')
         t1 = time.time()
         for i in range(nturns):
-            # Measure stuff
-            if self.bottleneck > self.monkeyarray.nummonkeys:
-                self.bottleneck = self.monkeyarray.nummonkeys
-                self.bottleneckturn = self.turns
-            otm = self.overallturnmultiplier
-            if self.worstoverallturnmultiplier > otm:
-                self.worstoverallturnmultiplier = otm
-            if self.bestoverallturnmultiplier < otm:
-                self.bestoverallturnmultiplier = otm
             # Increment turns
             self.turns += 1
+            if not (self.turns % self.archive_cycle):
+                # Measure stuff
+                if self.bottleneck > self.monkeyarray.nummonkeys:
+                    self.bottleneck = self.monkeyarray.nummonkeys
+                    self.bottleneckturn = self.turns
+                otm = self.overallturnmultiplier
+                if self.worstoverallturnmultiplier > otm:
+                    self.worstoverallturnmultiplier = otm
+                if self.bestoverallturnmultiplier < otm:
+                    self.bestoverallturnmultiplier = otm
+                # Print stuff
+                print('|', end='', flush=True)
             # Spawn predator
             pred = self.predarray.spawn()
             # Witnessing phase
             statearray = self.monkeyarray.witness(pred)
             # Hunting phase
             survivors = self.predarray.hunt(pred, statearray)
-            self.monkeyarray.survive(survivors)
+            self.monkeyarray.survive(survivors, self.immortal)
             # Conditional break
             if self.monkeyarray.nummonkeys < self.min_monkeys:
-                break
+                if self.immortal:
+                    # Conditional subroutine if immortal is True
+                    while self.monkeyarray.nummonkeys < self.nmonkeys:
+                        self.monkeyarray.reproduce(
+                            self.rep_rate,
+                            self.mut_rate,
+                            max_monkeys=self.nmonkeys)
+                else:
+                    break
             # Reproductive phase
             self.monkeyarray.reproduce(
                 self.rep_rate,
