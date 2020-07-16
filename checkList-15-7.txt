@@ -1,0 +1,6 @@
+CHECK to-do list de Portner y su diferencia entre indicativos e imperativos
+CHECK(VER PRINCIPIOS MINIMOS) decidir si podemos evitar hablar de teorías a la stalnaker, dada su intencionalidad
+decidir si los actos van a ser cambiar el contexto de alguna manera (i.e., via common ground y to-do list) o via cambiar creencias vs no-creencias; o ambas
+decidir si nuestra solución no es tan trivial como la de Barrett; si no, agregar sección que defienda eso
+corregir la respuesta a zollman
+agregar footnote sobre Skyrms solo teniendo positive feedback
