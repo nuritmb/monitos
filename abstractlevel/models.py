@@ -277,7 +277,7 @@ class PredArray:
         if len(self.array.shape) != 2:
             raise ValueError(
                 'the array does not have the correct dimensions (m, n)! current dimensions are {0}'.format(
-                    self.shape))
+                    self.array.shape))
         if np.amax(self.array) > 1.0:
             raise ValueError('the array has values grater than 1.0')
         if np.amin(self.array) < 0.0:
@@ -630,7 +630,7 @@ class MonkeyArray:
         wellequiped = (self.strategyconvention == predarray.survivalstates)
         return np.where(wellequiped)[0]
 
-    def learned(self, predarray: PredArray) -> np.array:
+    def learned(self, predarray: PredArray) -> bool:
         '''Returns True if the monkey's convention for each predator is the
         same as the predator's optimal response.
 
@@ -914,7 +914,7 @@ class Game:
         if print_ending:
             print('Game started.')
         t1 = time.time()
-        for i in range(nturns):
+        for _ in range(nturns):
             # Increment turns
             self.turns += 1
             if not (self.turns % self.archive_cycle):

@@ -1,17 +1,22 @@
+import os
 import copy
 import pandas as pd
 import numpy as np
 
 from abstractlevel.models import Game, PredArray
 
+# CREATE GAME
+#########################
+
 # Parameters
-numgames = 1
-maxturns = 1000000
+numgames = 1000
+maxturns = 10**6
 nmonkeys = 1000
 nsignals = 7
 nstates = 3
 minmonkeys = 30
 immortal = True
+archive_cycle = 1000
 
 predarray = PredArray([
     #grass  #tree   #bush
@@ -29,7 +34,32 @@ game = Game(
     mut_rate=0.05,
     min_monkeys=minmonkeys,
     immortal=immortal,
-    archive_cycle=10000)
+    archive_cycle=archive_cycle)
+
+# CREATE ARCHIVE
+#########################
+
+archive = pd.DataFrame(
+    columns=[
+        'Developed Stategy Convention',
+        'Bottleneck',
+        'Bottleneck Turn',
+        'Worst Overall Turn Multiplier',
+        'Best Overall Turn Multiplier',
+    ]
+)
+
+if os.path.exists('archive.csv') and os.path.isfile('archive.csv'):
+    os.remove('archive.csv')
+
+archive.to_csv(
+    'archive.csv',
+    header=True,
+    index=False,
+    encoding='utf-8')
+
+# RUN GAMES
+#########################
 
 print('RUNNING GAMES')
 print('-' * 30)
@@ -60,6 +90,20 @@ for i in range(numgames):
     if game.better(bestgame):
         bestgame = copy.deepcopy(game)
         bestgame.numgame = i+1
+    archive = pd.DataFrame({
+        'Developed Stategy Convention': [game.learned],
+        'Bottleneck': [game.bottleneck],
+        'Bottleneck Turn': [game.bottleneckturn],
+        'Worst Overall Turn Multiplier': [game.worstoverallturnmultiplier],
+        'Best Overall Turn Multiplier': [game.bestoverallturnmultiplier],
+    })
+
+    archive.to_csv(
+        'archive.csv',
+        mode='a',
+        header=False,
+        index=False,
+        encoding='utf-8')
 
 np.set_printoptions(precision=2, suppress=True)
 
