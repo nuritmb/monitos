@@ -637,6 +637,17 @@ class MonkeyArray:
         '''
         return np.all(self.strategyconvention == predarray.survivalstates)
 
+    def optimalchance(self, predarray: PredArray) -> np.ndarray:
+        '''Returns the overall chance of scoring the best response against each predator
+
+        The result is an array O, where O[p] is the population's chance of scoring the
+        optimal response against predator p.
+
+        '''
+        return self.strategychance[
+            np.array(range(self.numpredators)).reshape(self.numpredators, -1),
+            predarray.survivalstates.reshape(self.numpredators, -1)].reshape(-1)
+
     def concatenate(self, other: 'MonkeyArray') -> None:
         '''Concatenates *self* with another MonkeyArray object'''
         if not isinstance(other, type(self)):
@@ -765,6 +776,7 @@ class Game:
     :param archive_cycle: integer representing how many turns until the state of the game is archived
     :param delete_only_elderly: if True, it will delete the oldest monkeys when adjusting for overpopulation
     :param archive_maps: if True, monkey maps are archived along with the gamestate
+    :param archive_loss: if True, game will archive every loss
     :param immortal: if True, monkeys are allowed to reproduce to max population after hitting minmonkeys
 
     '''
@@ -781,6 +793,7 @@ class Game:
             archive_cycle: int = 100,
             delete_only_elderly: bool = False,
             archive_maps: bool = False,
+            archive_loss: bool = False,
             immortal: bool = False):
         # Received parameters
         self.nmonkeys = nmonkeys
@@ -793,6 +806,7 @@ class Game:
         self.archive_cycle = archive_cycle
         self.delete_only_elderly = delete_only_elderly
         self.archive_maps = archive_maps
+        self.archive_loss = archive_loss
         self.immortal = immortal
         # Calculated parameters
         self.monkeyarray = MonkeyArray(
@@ -805,8 +819,9 @@ class Game:
         self.bottleneckturn = 0 # Turn in which the bottleneck ocurred
         self.worstoverallturnmultiplier = np.inf # Worst .overallturnmultiplier in the whole game
         self.bestoverallturnmultiplier = 0.0 # Best .overallturnmultiplier in the whole game
-        # Measure turns
+        # Measure turns / losses
         self.turns = 0
+        self.losses = 0
         self.monkeyswon = None
         self.ended = False
 
@@ -866,6 +881,10 @@ class Game:
     def learned(self) -> bool:
         return self.monkeyarray.learned(self.predarray)
 
+    @property
+    def optimalchance(self) -> np.ndarray:
+        return self.monkeyarray.optimalchance(self.predarray)
+
     # Overall game properties
 
     @property
@@ -900,6 +919,19 @@ class Game:
             durpt=1000 * duration / self.turns)
         print(message, sep=sep, end=end)
 
+    def measure(self) -> None:
+        '''Stores relevant measures
+
+        '''
+        if self.bottleneck > self.monkeyarray.nummonkeys:
+            self.bottleneck = self.monkeyarray.nummonkeys
+            self.bottleneckturn = self.turns
+        otm = self.overallturnmultiplier
+        if self.worstoverallturnmultiplier > otm:
+            self.worstoverallturnmultiplier = otm
+        if self.bestoverallturnmultiplier < otm:
+            self.bestoverallturnmultiplier = otm
+
     def run(
             self,
             nturns: int,
@@ -919,15 +951,8 @@ class Game:
             self.turns += 1
             if not (self.turns % self.archive_cycle):
                 # Measure stuff
-                if self.bottleneck > self.monkeyarray.nummonkeys:
-                    self.bottleneck = self.monkeyarray.nummonkeys
-                    self.bottleneckturn = self.turns
-                otm = self.overallturnmultiplier
-                if self.worstoverallturnmultiplier > otm:
-                    self.worstoverallturnmultiplier = otm
-                if self.bestoverallturnmultiplier < otm:
-                    self.bestoverallturnmultiplier = otm
-                # Print stuff
+                self.measure()
+                # Print bar
                 print('|', end='', flush=True)
             # Spawn predator
             pred = self.predarray.spawn()
@@ -938,6 +963,10 @@ class Game:
             self.monkeyarray.survive(survivors, self.immortal)
             # Conditional break
             if self.monkeyarray.nummonkeys < self.min_monkeys:
+                self.losses += 1
+                if self.archive_loss:
+                    # Measure stuff
+                    self.measure()
                 if self.immortal:
                     # Conditional subroutine if immortal is True
                     while self.monkeyarray.nummonkeys < self.nmonkeys:
@@ -954,6 +983,8 @@ class Game:
                 max_monkeys=self.nmonkeys)
         self.ended = True
         self.monkeyswon = (self.turns >= nturns)
+        # Print space
+        print(' ', end='', flush=True)
         # Print ending message
         if print_ending:
             duration = time.time() - t1
@@ -963,20 +994,22 @@ class Game:
                 sep=sep,
                 end=end)
 
-    def reset(self) -> None:
+    def reset(self, wipe_statistics: bool=True) -> None:
         self.monkeyarray = MonkeyArray(
             npredators=self.predarray.numpredators,
             nsignals=self.nsignals,
             nstates=self.nstates,
             nmonkeys=self.nmonkeys)
-        self.bottleneck = self.nmonkeys # Minimum number of monkeys that ever existed
-        self.bottleneckturn = 0 # Turn in which the bottleneck ocurred
-        self.worstoverallturnmultiplier = np.inf # Worst .overallturnmultiplier in the whole game
-        self.bestoverallturnmultiplier = 0.0 # Best .overallturnmultiplier in the whole game
-        # Measure turns
-        self.turns = 0
-        self.monkeyswon = None
-        self.ended = False
+        if wipe_statistics:
+            self.bottleneck = self.nmonkeys # Minimum number of monkeys that ever existed
+            self.bottleneckturn = 0 # Turn in which the bottleneck ocurred
+            self.worstoverallturnmultiplier = np.inf # Worst .overallturnmultiplier in the whole game
+            self.bestoverallturnmultiplier = 0.0 # Best .overallturnmultiplier in the whole game
+            # Measure turns
+            self.losses = 0
+            self.turns = 0
+            self.monkeyswon = None
+            self.ended = False
 
     def better(self, other: 'Game') -> bool:
         '''Compares two games after their runs ended.
