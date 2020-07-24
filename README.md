@@ -1,17 +1,35 @@
 # Basically, I am monkey
 
-Things to consider:
+## Requirements
 
-- Number of monkeys
-- Benefit of following the convention vs. not following it
-- Run simulation with different number of signals and actions
-- Do monkeys need to learn individually how to talk, or just as a group? Also, how to measure difference between one and the other?
-- What happens when we take probabilistic wordmaps and actionmaps?
+You should have a working installation of python 3.6+
 
-Investigate:
+## Installation
 
-- What happens when we add structure and compositionality? Also, what is the best way to do this?
+If you are downloading the project from scratch, follow these steps:
 
-Benchmarks:
+First, download the project to a folder and open the command window on that folder. Then, create a new environment
+```
+python3 -m venv monkey-environment
+```
+You should now activate the new environment. On Windows, run:
+```
+monkey-environment/Scripts/activate
+```
+On Unix or MacOS, run:
+```
+source monkey-environment/bin/activate
+```
+Now it's time to install the requirements. While the environment is active, run:
+```
+pip3 install -r requirements.txt
+```
+And that's it! You can now run the simulation
 
-- What conditions have to be fulfilled in order for a coordinated wordmap and actionmap convention to be *likely*?
+## Configuration
+
+The settings can be found in the first few lines of `runapp.py`. Try changing them and running `runapp.py` with different configurations.
+
+## Archiving
+
+Once you run the simulation and the game ends, a CSV file with information about the game called `archives.csv` will be generated.
