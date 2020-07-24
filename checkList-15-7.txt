@@ -1,6 +1,6 @@
 CHECK to-do list de Portner y su diferencia entre indicativos e imperativos
-CHECK(VER PRINCIPIOS MINIMOS) decidir si podemos evitar hablar de teorías a la stalnaker, dada su intencionalidad
-decidir si los actos van a ser cambiar el contexto de alguna manera (i.e., via common ground y to-do list) o via cambiar creencias vs no-creencias; o ambas
-decidir si nuestra solución no es tan trivial como la de Barrett; si no, agregar sección que defienda eso
+CHECK(VER PRINCIPIOS MINIMOS todo list implica que participantes tienen creencias sobre estados mentales de otros porque son todolist de agentes específicos) decidir si podemos evitar hablar de teorías a la stalnaker, dada su intencionalidad
+CHECK (el commond ground y el to-do list son colectivos y las reacciones a señales son individuaels) decidir si los actos van a ser cambiar el contexto de alguna manera (i.e., via common ground y to-do list) o via cambiar creencias vs no-creencias; o ambas
+CHECK ((se tiene que ver al final)xq LSGs son lo más simple que pueden ser) decidir si nuestra solución no es tan trivial como la de Barrett; si no, agregar sección que defienda eso
 corregir la respuesta a zollman
 agregar footnote sobre Skyrms solo teniendo positive feedback
